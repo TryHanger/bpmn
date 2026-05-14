@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, s
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.session import get_db_session
-from app.schemas.template import DeployTemplateResponse, TemplateListResponse, TemplateRead
+from app.schemas.template import DeployTemplateResponse, TemplateListResponse, TemplateRead, TemplateVersionListResponse
 from app.services.template_service import TemplateService
 
 router = APIRouter()
@@ -45,6 +45,12 @@ async def deploy_template(
 
 
 @router.get("/{template_id}/versions")
-async def list_template_versions(template_id: str, db: AsyncSession = Depends(get_db_session)) -> dict:
+async def list_template_versions(template_id: str, db: AsyncSession = Depends(get_db_session)) -> TemplateVersionListResponse:
     service = TemplateService(db)
     return await service.list_template_versions(template_id)
+
+
+@router.delete("/versions/{version_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_template_version(version_id: str, db: AsyncSession = Depends(get_db_session)) -> None:
+    service = TemplateService(db)
+    await service.delete_template_version(version_id)

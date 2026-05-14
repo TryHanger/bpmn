@@ -12,10 +12,10 @@ class TemplateVersionRead(BaseModel):
 
     id: str
     template_id: str
+    version: int
     deployment_id: str | None
     process_definition_id: str | None
     xml_template: str
-    version: int
     flowable_version: int | None
     status: TemplateVersionStatus
     created_at: datetime
@@ -42,3 +42,7 @@ class TemplateListResponse(BaseModel):
 class DeployTemplateResponse(BaseModel):
     template: TemplateRead
     version: TemplateVersionRead
+
+
+class TemplateVersionListResponse(BaseModel):
+    items: list[TemplateVersionRead]

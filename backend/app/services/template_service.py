@@ -13,7 +13,13 @@ from app.core.config import get_settings
 from app.models.template import Template
 from app.models.template_version import TemplateVersion
 from app.models.user_types import TemplateStatus, TemplateVersionStatus
-from app.schemas.template import DeployTemplateResponse, TemplateListResponse, TemplateRead, TemplateVersionRead
+from app.schemas.template import (
+    DeployTemplateResponse,
+    TemplateListResponse,
+    TemplateRead,
+    TemplateVersionListResponse,
+    TemplateVersionRead,
+)
 from app.services.flowable import FlowableClient
 
 
@@ -73,9 +79,44 @@ class TemplateService:
             return None
         return TemplateRead.model_validate(template)
 
-    async def list_template_versions(self, template_id: str) -> dict:
+    async def list_template_versions(self, template_id: str) -> TemplateVersionListResponse:
         template = await self._get_template_with_versions(template_id)
-        return {"items": [TemplateVersionRead.model_validate(version) for version in template.versions]}
+        return TemplateVersionListResponse(items=[TemplateVersionRead.model_validate(version) for version in template.versions])
+
+    async def delete_template_version(self, version_id: str) -> None:
+        result = await self.session.execute(
+            select(TemplateVersion)
+            .options(selectinload(TemplateVersion.template))
+            .where(TemplateVersion.id == version_id)
+        )
+        version = result.scalar_one_or_none()
+        if version is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Template version not found")
+
+        if version.status == TemplateVersionStatus.DEPLOYED:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Cannot delete deployed version")
+
+        template = version.template
+        assert template is not None
+
+        if template.current_version_id == version.id:
+            fallback_result = await self.session.execute(
+                select(TemplateVersion)
+                .where(TemplateVersion.template_id == template.id)
+                .where(TemplateVersion.status == TemplateVersionStatus.DEPLOYED)
+                .order_by(TemplateVersion.created_at.desc(), TemplateVersion.version.desc())
+                .limit(1)
+            )
+            fallback_version = fallback_result.scalar_one_or_none()
+            if fallback_version is None:
+                template.current_version_id = None
+                template.status = TemplateStatus.DRAFT
+            else:
+                template.current_version_id = fallback_version.id
+                template.status = TemplateStatus.DEPLOYED
+
+        await self.session.delete(version)
+        await self.session.commit()
 
     async def save_draft_from_upload(self, *, file: UploadFile, explicit_name: str | None = None) -> TemplateRead:
         xml_bytes = await file.read()

@@ -6,6 +6,12 @@ interface ToastItem extends ToastPayload {
   id: number
 }
 
+const TOAST_CLASSES: Record<NonNullable<ToastPayload['tone']>, string> = {
+  info: 'border-slate-200 bg-white/95 text-slate-900',
+  success: 'border-emerald-200 bg-emerald-50/95 text-emerald-950',
+  error: 'border-rose-200 bg-rose-50/95 text-rose-950',
+}
+
 export function ToastHost() {
   const [toasts, setToasts] = useState<ToastItem[]>([])
 
@@ -27,7 +33,7 @@ export function ToastHost() {
       {toasts.map((toast) => (
         <div
           key={toast.id}
-          className="rounded-2xl border border-slate-200 bg-white/95 px-4 py-3 text-sm font-medium text-slate-900 shadow-lg shadow-slate-900/10 backdrop-blur"
+          className={`rounded-2xl border px-4 py-3 text-sm font-medium shadow-lg shadow-slate-900/10 backdrop-blur ${TOAST_CLASSES[toast.tone ?? 'info']}`}
         >
           {toast.message}
         </div>

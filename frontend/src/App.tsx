@@ -14,6 +14,7 @@ import { ProcessDetailPage } from './pages/ProcessDetailPage'
 import { ProcessesPage } from './pages/ProcessesPage'
 import { RolesPage } from './pages/RolesPage'
 import { TasksPage } from './pages/TasksPage'
+import { TemplatesPage } from './pages/TemplatesPage'
 
 const queryClient = new QueryClient()
 
@@ -62,6 +63,7 @@ export default function App() {
               <Route path="/employees" element={<PageErrorBoundary><EmployeesPage /></PageErrorBoundary>} />
               <Route path="/processes" element={<PageErrorBoundary><ProcessesPage /></PageErrorBoundary>} />
               <Route path="/processes/:id" element={<PageErrorBoundary><ProcessDetailPage /></PageErrorBoundary>} />
+              <Route path="/templates" element={<PageErrorBoundary><TemplatesPage /></PageErrorBoundary>} />
               <Route path="/tasks" element={<PageErrorBoundary><TasksPage /></PageErrorBoundary>} />
             </Route>
           </Route>

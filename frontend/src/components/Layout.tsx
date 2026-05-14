@@ -11,6 +11,7 @@ interface LayoutProps {
 
 const navItems = [
   { to: '/processes', label: 'Процессы' },
+  { to: '/templates', label: 'Шаблоны' },
   { to: '/tasks', label: 'Задачи' },
   { to: '/companies', label: 'Компании' },
   { to: '/roles', label: 'Роли' },

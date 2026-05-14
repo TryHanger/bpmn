@@ -1,7 +1,33 @@
 import { axiosInstance } from './axios'
-import type { TemplateListResponse, TemplateResponse } from '../types/api'
+import type { DeployTemplateResponse, TemplateListResponse, TemplateRead, TemplateVersionListResponse } from '../types/api'
 
-export async function getTemplates(): Promise<TemplateResponse[]> {
+export async function getTemplates(): Promise<TemplateRead[]> {
   const response = await axiosInstance.get<TemplateListResponse>('/api/templates')
   return response.data.items
+}
+
+export async function getTemplateVersions(templateId: string): Promise<TemplateVersionListResponse['items']> {
+  const response = await axiosInstance.get<TemplateVersionListResponse>(`/api/templates/${templateId}/versions`)
+  return response.data.items
+}
+
+export async function uploadTemplate(file: File, templateName?: string): Promise<TemplateRead> {
+  const formData = new FormData()
+  formData.append('file', file)
+  if (templateName) {
+    formData.append('template_name', templateName)
+  }
+
+  const response = await axiosInstance.post<TemplateRead>('/api/templates/upload', formData)
+  return response.data
+}
+
+export async function deployTemplate(templateId: string): Promise<DeployTemplateResponse> {
+  const formData = new FormData()
+  const response = await axiosInstance.post<DeployTemplateResponse>(`/api/templates/${templateId}/deploy`, formData)
+  return response.data
+}
+
+export async function deleteTemplateVersion(versionId: string): Promise<void> {
+  await axiosInstance.delete(`/api/templates/versions/${versionId}`)
 }

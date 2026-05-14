@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+             xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+             xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
+             xmlns:flowable="http://flowable.org/bpmn"
+             targetNamespace="Examples">
+
+  <process id="simpleApproval" name="Simple Approval" isExecutable="true">
+
+    <startEvent id="start" />
+
+    <!-- Поток от старта к задаче -->
+    <sequenceFlow id="flow1" sourceRef="start" targetRef="managerApproval" />
+
+    <!-- Задача согласования -->
+    <userTask id="managerApproval"
+              name="Manager Approval"
+              flowable:assignee="manager">
+      <documentation>Задача на согласование у менеджера</documentation>
+    </userTask>
+
+    <!-- Поток к гейтвею -->
+    <sequenceFlow id="flow2" sourceRef="managerApproval" targetRef="decision" />
+
+    <!-- Exclusive Gateway для проверки результата -->
+    <exclusiveGateway id="decision" />
+
+    <!-- Approved путь -->
+    <sequenceFlow id="flowApproved"
+                  sourceRef="decision"
+                  targetRef="end">
+      <conditionExpression xsi:type="tFormalExpression">
+        ${managerApproved == true}
+      </conditionExpression>
+    </sequenceFlow>
+
+    <!-- Rejected путь -->
+    <sequenceFlow id="flowRejected"
+                  sourceRef="decision"
+                  targetRef="end">
+      <conditionExpression xsi:type="tFormalExpression">
+        ${managerApproved == false}
+      </conditionExpression>
+    </sequenceFlow>
+
+    <endEvent id="end" />
+
+  </process>
+
+  <!-- ==================== DIAGRAM ==================== -->
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="simpleApproval">
+
+      <bpmndi:BPMNShape id="start_di" bpmnElement="start">
+        <dc:Bounds x="150" y="100" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="task_di" bpmnElement="managerApproval">
+        <dc:Bounds x="250" y="80" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="gateway_di" bpmnElement="decision">
+        <dc:Bounds x="400" y="95" width="50" height="50"/>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="end_di" bpmnElement="end">
+        <dc:Bounds x="520" y="100" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNEdge id="flow1_di" bpmnElement="flow1">
+        <di:waypoint x="186" y="118"/>
+        <di:waypoint x="250" y="118"/>
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="flow2_di" bpmnElement="flow2">
+        <di:waypoint x="350" y="118"/>
+        <di:waypoint x="400" y="118"/>
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="flowApproved_di" bpmnElement="flowApproved">
+        <di:waypoint x="450" y="118"/>
+        <di:waypoint x="520" y="118"/>
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="flowRejected_di" bpmnElement="flowRejected">
+        <di:waypoint x="425" y="145"/>
+        <di:waypoint x="520" y="118"/>
+      </bpmndi:BPMNEdge>
+
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+
+</definitions>

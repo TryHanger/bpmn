@@ -8,7 +8,7 @@ import { getTemplates } from '../api/templates'
 import { Modal } from '../components/Modal'
 import { useAuth } from '../hooks/useAuth'
 import { showToast } from '../lib/toast'
-import type { TemplateResponse } from '../types/api'
+import type { TemplateRead } from '../types/api'
 
 interface ProcessVariableRow {
   name: string
@@ -41,7 +41,7 @@ export function ProcessesPage() {
     return deployed.length > 0 ? deployed : templatesQuery.data ?? []
   }, [templatesQuery.data])
 
-  const selectedTemplate = useMemo<TemplateResponse | undefined>(
+  const selectedTemplate = useMemo<TemplateRead | undefined>(
     () => availableTemplates.find((template) => template.process_definition_key === selectedTemplateKey),
     [availableTemplates, selectedTemplateKey],
   )

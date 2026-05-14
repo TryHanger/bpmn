@@ -25,6 +25,45 @@ export interface CompanyResponse {
   name: string
 }
 
+export interface TemplateVersionRead {
+  id: string
+  template_id: string
+  version: number
+  deployment_id: string | null
+  process_definition_id: string | null
+  xml_template: string
+  flowable_version: number | null
+  status: 'DRAFT' | 'DEPLOYED' | 'ARCHIVED'
+  created_at: string
+}
+
+export interface TemplateRead {
+  id: string
+  name: string
+  process_definition_key: string
+  status: 'DRAFT' | 'DEPLOYED'
+  current_version_id: string | null
+  versions: TemplateVersionRead[]
+  created_at: string
+  updated_at: string
+}
+
+export interface TemplateListResponse {
+  items: TemplateRead[]
+  total: number
+}
+
+export interface TemplateVersionListResponse {
+  items: TemplateVersionRead[]
+}
+
+export interface DeployTemplateResponse {
+  template: TemplateRead
+  version: TemplateVersionRead
+}
+
+export type TemplateResponse = TemplateRead
+
 export interface RoleResponse {
   id: string
   name: string
@@ -45,21 +84,6 @@ export interface EmployeeResponse {
   temp_password: string | null
   created_at: string
   updated_at: string
-}
-
-export interface TemplateResponse {
-  id: string
-  name: string
-  process_definition_key: string
-  status: 'DRAFT' | 'DEPLOYED' | 'ARCHIVED'
-  current_version_id: string | null
-  created_at: string
-  updated_at: string
-}
-
-export interface TemplateListResponse {
-  items: TemplateResponse[]
-  total: number
 }
 
 export interface ProcessInstanceResponse {
