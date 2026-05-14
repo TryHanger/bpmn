@@ -1,0 +1,104 @@
+name: bpmn
+
+services:
+  backend:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    container_name: bpmn-backend
+    ports:
+      - "8083:8000"
+    volumes:
+      - ../backend:/app
+      - ../configs:/app/configs
+    env_file:
+      - ../configs/.env.dev
+    environment:
+      PYTHONUNBUFFERED: "1"
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@postgres:5432/bpmn_service
+      UPLOADS_DIR: /app/uploads
+    working_dir: /app
+    command: >
+      uvicorn app.main:app
+      --host 0.0.0.0
+      --port 8000
+      --reload
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile
+    container_name: bpmn-frontend
+    ports:
+      - "3001:3001"
+    volumes:
+      - ../frontend:/app
+      - /app/node_modules
+    environment:
+      VITE_API_BASE_URL: http://localhost:8083
+      CHOKIDAR_USEPOLLING: "true"
+    working_dir: /app
+    command: >
+      npm run dev
+      -- --host 0.0.0.0
+      --port 3001
+    restart: unless-stopped
+
+  # =========================
+  # PostgreSQL for FastAPI
+  # =========================
+  postgres:
+    image: postgres:16
+    container_name: bpmn-postgres
+    environment:
+      POSTGRES_DB: bpmn_service
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5434:5432"
+    volumes:
+      - bpmn_pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d bpmn_service"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+  flowable:
+    image: flowable/flowable-rest:6.8.0
+    ports:
+      - "8080:8080"
+    environment:
+
+      SPRING_DATASOURCE_URL: jdbc:postgresql://flowable-db:5432/flowable
+      SPRING_DATASOURCE_USERNAME: flowable
+      SPRING_DATASOURCE_PASSWORD: flowable
+      SPRING_DATASOURCE_DRIVER_CLASS_NAME: org.postgresql.Driver
+
+      FLOWABLE_DATABASE_SCHEMA_UPDATE: true
+
+      SPRING_SECURITY_USER_NAME: rest-admin
+      SPRING_SECURITY_USER_PASSWORD: test
+
+    depends_on:
+      - flowable-db
+    restart: unless-stopped
+
+  flowable-db:
+    image: postgres:14
+    environment:
+      POSTGRES_DB: flowable
+      POSTGRES_USER: flowable
+      POSTGRES_PASSWORD: flowable
+    ports:
+      - "5435:5432"
+    volumes:
+      - flowable_pg_data:/var/lib/postgresql/data
+
+volumes:
+  bpmn_pg_data: 
+  flowable_pg_data:

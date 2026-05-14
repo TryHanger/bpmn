@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xmlns:flowable="http://flowable.org/bpmn"
+             targetNamespace="http://example.com/processdef">
+
+  <process id="threeStepApproval"
+           name="Three Step Approval"
+           isExecutable="true">
+
+    <!-- Start -->
+    <startEvent id="start" name="Start"/>
+
+    <!-- HR Approval #1 -->
+    <userTask id="hrApproval1"
+              name="HR Approval"
+              flowable:assignee="hr"/>
+
+    <!-- Gateway after HR #1 -->
+    <exclusiveGateway id="gatewayHr1" name="Approved?"/>
+
+    <!-- Manager Approval -->
+    <userTask id="managerApproval"
+              name="Manager Approval"
+              flowable:assignee="manager"/>
+
+    <!-- Gateway after Manager -->
+    <exclusiveGateway id="gatewayManager" name="Approved?"/>
+
+    <!-- HR Approval #2 -->
+    <userTask id="hrApproval2"
+              name="Final HR Approval"
+              flowable:assignee="hr"/>
+
+    <!-- Gateway after HR #2 -->
+    <exclusiveGateway id="gatewayHr2" name="Approved?"/>
+
+    <!-- Successful end -->
+    <endEvent id="approvedEnd" name="Approved"/>
+
+    <!-- Rejected end -->
+    <endEvent id="rejectedEnd" name="Rejected"/>
+
+    <!-- Sequence Flows -->
+    <sequenceFlow id="flow1"
+                  sourceRef="start"
+                  targetRef="hrApproval1"/>
+
+    <sequenceFlow id="flow2"
+                  sourceRef="hrApproval1"
+                  targetRef="gatewayHr1"/>
+
+    <!-- If approved -> Manager -->
+    <sequenceFlow id="flow3"
+                  sourceRef="gatewayHr1"
+                  targetRef="managerApproval">
+      <conditionExpression xsi:type="tFormalExpression"><![CDATA[${approved == true}]]></conditionExpression>
+    </sequenceFlow>
+
+    <!-- If rejected -> End -->
+    <sequenceFlow id="flow4"
+                  sourceRef="gatewayHr1"
+                  targetRef="rejectedEnd">
+      <conditionExpression xsi:type="tFormalExpression"><![CDATA[${approved == false}]]></conditionExpression>
+    </sequenceFlow>
+
+    <sequenceFlow id="flow5"
+                  sourceRef="managerApproval"
+                  targetRef="gatewayManager"/>
+
+    <!-- If approved -> Final HR -->
+    <sequenceFlow id="flow6"
+                  sourceRef="gatewayManager"
+                  targetRef="hrApproval2">
+      <conditionExpression xsi:type="tFormalExpression"><![CDATA[${approved == true}]]></conditionExpression>
+    </sequenceFlow>
+
+    <!-- If rejected -> End -->
+    <sequenceFlow id="flow7"
+                  sourceRef="gatewayManager"
+                  targetRef="rejectedEnd">
+      <conditionExpression xsi:type="tFormalExpression"><![CDATA[${approved == false}]]></conditionExpression>
+    </sequenceFlow>
+
+    <sequenceFlow id="flow8"
+                  sourceRef="hrApproval2"
+                  targetRef="gatewayHr2"/>
+
+    <!-- Final approval -->
+    <sequenceFlow id="flow9"
+                  sourceRef="gatewayHr2"
+                  targetRef="approvedEnd">
+      <conditionExpression xsi:type="tFormalExpression"><![CDATA[${approved == true}]]></conditionExpression>
+    </sequenceFlow>
+
+    <!-- Final rejection -->
+    <sequenceFlow id="flow10"
+                  sourceRef="gatewayHr2"
+                  targetRef="rejectedEnd">
+      <conditionExpression xsi:type="tFormalExpression"><![CDATA[${approved == false}]]></conditionExpression>
+    </sequenceFlow>
+
+  </process>
+</definitions>

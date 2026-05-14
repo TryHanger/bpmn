@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xmlns:flowable="http://flowable.org/bpmn"
+             targetNamespace="http://example.com/processdef">
+
+  <process id="amountApprovalProcess"
+           name="Amount Approval Process"
+           isExecutable="true">
+
+    <!-- ===================================================== -->
+    <!-- START -->
+    <!-- В процесс передаются переменные:
+         - value (number)
+         - approved (boolean, будет установлена при завершении CEO Approval)
+    -->
+    <!-- ===================================================== -->
+    <startEvent id="start" name="Start"/>
+
+    <!-- ===================================================== -->
+    <!-- PARALLEL APPROVAL (HR + MANAGER)                      -->
+    <!-- ===================================================== -->
+    <parallelGateway id="parallelStart" name="Start Parallel Approval"/>
+
+    <userTask id="hrApproval"
+              name="HR Approval"
+              flowable:assignee="hr"/>
+
+    <userTask id="managerApproval"
+              name="Manager Approval"
+              flowable:assignee="manager"/>
+
+    <parallelGateway id="parallelJoin" name="Wait HR and Manager"/>
+
+    <!-- ===================================================== -->
+    <!-- CEO APPROVAL                                          -->
+    <!-- ===================================================== -->
+    <userTask id="ceoApproval"
+              name="CEO Approval"
+              flowable:assignee="ceo"/>
+
+    <!-- Проверка, одобрил ли CEO -->
+    <exclusiveGateway id="ceoDecision" name="CEO Approved?"/>
+
+    <!-- ===================================================== -->
+    <!-- ROUTING BY VALUE                                      -->
+    <!-- 10 <= value < 50                                      -->
+    <!-- 50 <= value <= 100                                    -->
+    <!-- value > 100                                           -->
+    <!-- ===================================================== -->
+    <exclusiveGateway id="amountGateway" name="Check Amount"/>
+
+    <!-- ===================================================== -->
+    <!-- FINAL TASKS                                           -->
+    <!-- ===================================================== -->
+    <userTask id="smallAmountTask"
+              name="Small Amount Processing"
+              flowable:assignee="finance_small"/>
+
+    <userTask id="mediumAmountTask"
+              name="Medium Amount Processing"
+              flowable:assignee="finance_medium"/>
+
+    <userTask id="largeAmountTask"
+              name="Large Amount Processing"
+              flowable:assignee="finance_large"/>
+
+    <!-- ===================================================== -->
+    <!-- END EVENTS                                            -->
+    <!-- ===================================================== -->
+    <endEvent id="approvedEnd" name="Approved"/>
+    <endEvent id="rejectedEnd" name="Rejected"/>
+
+    <!-- ===================================================== -->
+    <!-- FLOWS                                                 -->
+    <!-- ===================================================== -->
+
+    <!-- Start -> Parallel -->
+    <sequenceFlow id="flow1"
+                  sourceRef="start"
+                  targetRef="parallelStart"/>
+
+    <!-- Parallel split -->
+    <sequenceFlow id="flow2"
+                  sourceRef="parallelStart"
+                  targetRef="hrApproval"/>
+
+    <sequenceFlow id="flow3"
+                  sourceRef="parallelStart"
+                  targetRef="managerApproval"/>
+
+    <!-- Parallel join -->
+    <sequenceFlow id="flow4"
+                  sourceRef="hrApproval"
+                  targetRef="parallelJoin"/>
+
+    <sequenceFlow id="flow5"
+                  sourceRef="managerApproval"
+                  targetRef="parallelJoin"/>
+
+    <!-- Join -> CEO -->
+    <sequenceFlow id="flow6"
+                  sourceRef="parallelJoin"
+                  targetRef="ceoApproval"/>
+
+    <!-- CEO -> Decision -->
+    <sequenceFlow id="flow7"
+                  sourceRef="ceoApproval"
+                  targetRef="ceoDecision"/>
+
+    <!-- CEO rejected -->
+    <sequenceFlow id="flow8"
+                  sourceRef="ceoDecision"
+                  targetRef="rejectedEnd">
+      <conditionExpression xsi:type="tFormalExpression"><![CDATA[
+        ${approved == false}
+      ]]></conditionExpression>
+    </sequenceFlow>
+
+    <!-- CEO approved -->
+    <sequenceFlow id="flow9"
+                  sourceRef="ceoDecision"
+                  targetRef="amountGateway">
+      <conditionExpression xsi:type="tFormalExpression"><![CDATA[
+        ${approved == true}
+      ]]></conditionExpression>
+    </sequenceFlow>
+
+    <!-- ===================================================== -->
+    <!-- Amount Routing                                        -->
+    <!-- ===================================================== -->
+
+    <!-- 10 <= value < 50 -->
+    <sequenceFlow id="flow10"
+                  sourceRef="amountGateway"
+                  targetRef="smallAmountTask">
+      <conditionExpression xsi:type="tFormalExpression"><![CDATA[
+        ${value >= 10 && value < 50}
+      ]]></conditionExpression>
+    </sequenceFlow>
+
+    <!-- 50 <= value <= 100 -->
+    <sequenceFlow id="flow11"
+                  sourceRef="amountGateway"
+                  targetRef="mediumAmountTask">
+      <conditionExpression xsi:type="tFormalExpression"><![CDATA[
+        ${value >= 50 && value <= 100}
+      ]]></conditionExpression>
+    </sequenceFlow>
+
+    <!-- value > 100 -->
+    <sequenceFlow id="flow12"
+                  sourceRef="amountGateway"
+                  targetRef="largeAmountTask">
+      <conditionExpression xsi:type="tFormalExpression"><![CDATA[
+        ${value > 100}
+      ]]></conditionExpression>
+    </sequenceFlow>
+
+    <!-- ===================================================== -->
+    <!-- Final Tasks -> Approved                               -->
+    <!-- ===================================================== -->
+
+    <sequenceFlow id="flow13"
+                  sourceRef="smallAmountTask"
+                  targetRef="approvedEnd"/>
+
+    <sequenceFlow id="flow14"
+                  sourceRef="mediumAmountTask"
+                  targetRef="approvedEnd"/>
+
+    <sequenceFlow id="flow15"
+                  sourceRef="largeAmountTask"
+                  targetRef="approvedEnd"/>
+
+  </process>
+</definitions>

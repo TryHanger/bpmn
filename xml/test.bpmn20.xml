@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xmlns:flowable="http://flowable.org/bpmn"
+             targetNamespace="http://example.com/processdef">
+
+  <process id="amountApprovalProcess"
+           name="Amount Approval Process"
+           isExecutable="true">
+
+    <!-- START -->
+    <startEvent id="start"/>
+
+    <!-- PARALLEL HR + MANAGER -->
+    <parallelGateway id="split"/>
+
+    <userTask id="hrApproval"
+              name="HR Approval"
+              flowable:assignee="hr"/>
+
+    <userTask id="managerApproval"
+              name="Manager Approval"
+              flowable:assignee="manager"/>
+
+    <!-- SYNC -->
+    <parallelGateway id="join"/>
+
+    <!-- DECISION AFTER HR + MANAGER -->
+    <exclusiveGateway id="preCheck" name="HR/Manager decision"/>
+
+    <!-- REJECT -->
+    <sequenceFlow id="toReject"
+                  sourceRef="preCheck"
+                  targetRef="rejectedEnd">
+      <conditionExpression xsi:type="tFormalExpression"><![CDATA[
+        ${hrApproved != true || managerApproved != true}
+      ]]></conditionExpression>
+    </sequenceFlow>
+
+    <!-- APPROVE -> CEO -->
+    <sequenceFlow id="toCeo"
+                  sourceRef="preCheck"
+                  targetRef="ceoApproval">
+      <conditionExpression xsi:type="tFormalExpression"><![CDATA[
+        ${hrApproved == true && managerApproved == true}
+      ]]></conditionExpression>
+    </sequenceFlow>
+
+    <!-- CEO -->
+    <userTask id="ceoApproval"
+              name="CEO Approval"
+              flowable:assignee="ceo"/>
+
+    <!-- CEO DECISION -->
+    <exclusiveGateway id="ceoDecision"/>
+
+    <!-- CEO APPROVED -->
+    <sequenceFlow id="ceoOk"
+                  sourceRef="ceoDecision"
+                  targetRef="amountGateway">
+      <conditionExpression xsi:type="tFormalExpression"><![CDATA[
+        ${ceoApproved == true}
+      ]]></conditionExpression>
+    </sequenceFlow>
+
+    <!-- CEO REJECTED -->
+    <sequenceFlow id="ceoReject"
+                  sourceRef="ceoDecision"
+                  targetRef="rejectedEnd">
+      <conditionExpression xsi:type="tFormalExpression"><![CDATA[
+        ${ceoApproved == false}
+      ]]></conditionExpression>
+    </sequenceFlow>
+
+    <!-- AMOUNT ROUTING -->
+    <exclusiveGateway id="amountGateway"/>
+
+    <userTask id="smallAmountTask"
+              name="Small Amount Approval"
+              flowable:assignee="finance_small"/>
+
+    <userTask id="mediumAmountTask"
+              name="Medium Amount Approval"
+              flowable:assignee="finance_medium"/>
+
+    <userTask id="largeAmountTask"
+              name="Large Amount Approval"
+              flowable:assignee="finance_large"/>
+
+    <!-- END EVENTS -->
+    <endEvent id="approvedEnd"/>
+    <endEvent id="rejectedEnd"/>
+
+    <!-- ============================= -->
+    <!-- FLOWS -->
+    <!-- ============================= -->
+
+    <!-- START -->
+    <sequenceFlow id="startToSplit"
+                  sourceRef="start"
+                  targetRef="split"/>
+
+    <!-- PARALLEL TASKS -->
+    <sequenceFlow id="splitToHr"
+                  sourceRef="split"
+                  targetRef="hrApproval"/>
+
+    <sequenceFlow id="splitToManager"
+                  sourceRef="split"
+                  targetRef="managerApproval"/>
+
+    <!-- JOIN -->
+    <sequenceFlow id="hrToJoin"
+                  sourceRef="hrApproval"
+                  targetRef="join"/>
+
+    <sequenceFlow id="managerToJoin"
+                  sourceRef="managerApproval"
+                  targetRef="join"/>
+
+    <!-- PRECHECK -->
+    <sequenceFlow id="joinToPreCheck"
+                  sourceRef="join"
+                  targetRef="preCheck"/>
+
+    <!-- CRITICAL MISSING FLOW -->
+    <sequenceFlow id="ceoToCeoDecision"
+                  sourceRef="ceoApproval"
+                  targetRef="ceoDecision"/>
+
+    <!-- AMOUNT CONDITIONS -->
+    <sequenceFlow id="amountToSmall"
+                  sourceRef="amountGateway"
+                  targetRef="smallAmountTask">
+      <conditionExpression xsi:type="tFormalExpression"><![CDATA[
+        ${amount >= 10 && amount < 50}
+      ]]></conditionExpression>
+    </sequenceFlow>
+
+    <sequenceFlow id="amountToMedium"
+                  sourceRef="amountGateway"
+                  targetRef="mediumAmountTask">
+      <conditionExpression xsi:type="tFormalExpression"><![CDATA[
+        ${amount >= 50 && amount <= 100}
+      ]]></conditionExpression>
+    </sequenceFlow>
+
+    <sequenceFlow id="amountToLarge"
+                  sourceRef="amountGateway"
+                  targetRef="largeAmountTask">
+      <conditionExpression xsi:type="tFormalExpression"><![CDATA[
+        ${amount > 100}
+      ]]></conditionExpression>
+    </sequenceFlow>
+
+    <!-- FINANCE TASKS TO END -->
+    <sequenceFlow id="smallToApproved"
+                  sourceRef="smallAmountTask"
+                  targetRef="approvedEnd"/>
+
+    <sequenceFlow id="mediumToApproved"
+                  sourceRef="mediumAmountTask"
+                  targetRef="approvedEnd"/>
+
+    <sequenceFlow id="largeToApproved"
+                  sourceRef="largeAmountTask"
+                  targetRef="approvedEnd"/>
+
+  </process>
+</definitions>
