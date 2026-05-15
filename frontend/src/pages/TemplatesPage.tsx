@@ -3,8 +3,11 @@ import { isAxiosError } from 'axios'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import { BpmnEditor } from '../components/BpmnEditor'
+import BpmnPropertiesPanel from '../components/BpmnPropertiesPanel'
 import { deleteTemplateVersion, deployTemplate, getTemplateVersions, getTemplates, uploadTemplate } from '../api/templates'
 import { showToast } from '../lib/toast'
+import { useAuthStore } from '../store/authStore'
+import { getRoles } from '../api/roles'
 import type { TemplateRead, TemplateVersionRead } from '../types/api'
 
 const VERSION_STATUS_STYLES: Record<TemplateVersionRead['status'], string> = {
@@ -51,6 +54,7 @@ function generateEmptyBpmnXml(processId: string, processName: string): string {
   return `<?xml version="1.0" encoding="UTF-8"?>
 <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xmlns:flowable="http://flowable.org/bpmn"
              xmlns:activiti="http://activiti.org/bpmn"
              xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
              xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
@@ -418,6 +422,19 @@ export function TemplatesPage() {
   const createTemplateDisabled =
     uploadMutation.isPending || !processId.trim() || !processName.trim() || !PROCESS_ID_PATTERN.test(processId.trim())
 
+  const modelerRef = useRef<any | null>(null)
+  const [selectedElement, setSelectedElement] = useState<any | null>(null)
+
+  const authUser = useAuthStore((s) => s.user)
+  const companyId = authUser?.company_id ?? ''
+  const rolesQuery = useQuery({
+    queryKey: ['roles', companyId],
+    queryFn: () => getRoles(companyId),
+    enabled: Boolean(companyId),
+  })
+
+  const availableRoles = (rolesQuery.data ?? []).map((r: any) => r.flowable_group)
+
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
@@ -540,7 +557,7 @@ export function TemplatesPage() {
         </div>
       ) : null}
 
-      <div className="grid gap-6 xl:grid-cols-[360px_minmax(0,1fr)]">
+      <div className="grid gap-6 xl:grid-cols-[360px_minmax(0,1fr)_288px]">
         <aside className="rounded-3xl border border-white/70 bg-white/85 p-4 shadow-xl shadow-slate-900/5 backdrop-blur">
           <div className="mb-4 flex items-center justify-between">
             <div>
@@ -711,11 +728,26 @@ export function TemplatesPage() {
                     xml={currentXml}
                     onChange={handleEditorChange}
                     readonly={editorReadonly}
+                    onModelerReady={(m) => { modelerRef.current = m }}
+                    onElementSelect={setSelectedElement}
                   />
                 ) : (
                   <div className="flex h-full items-center justify-center text-sm text-slate-500">Загрузка диаграммы...</div>
                 )}
               </div>
+              {/* Properties panel column */}
+              {!editorReadonly && selectedElement ? (
+                <div className="w-full border-l border-slate-200 bg-white">
+                  <BpmnPropertiesPanel
+                    element={selectedElement}
+                    availableRoles={availableRoles}
+                    modeler={modelerRef.current}
+                    onXmlChange={(xml) => { handleEditorChange(xml) }}
+                  />
+                </div>
+              ) : (
+                <div className="w-full" />
+              )}
             </>
           )}
         </section>

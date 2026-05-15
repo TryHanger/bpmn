@@ -9,6 +9,8 @@ interface BpmnEditorProps {
   xml: string
   onChange?: (xml: string) => void
   readonly?: boolean
+  onModelerReady?: (modeler: any) => void
+  onElementSelect?: (element: any | null) => void
 }
 
 type DiagramInstance = any
@@ -17,7 +19,7 @@ const isValidBpmnXml = (xml: string): boolean => {
   return xml.trim().length > 0 && xml.includes('<') && xml.includes('bpmn')
 }
 
-export function BpmnEditor({ xml, onChange, readonly = false }: BpmnEditorProps) {
+export function BpmnEditor({ xml, onChange, readonly = false, onModelerReady, onElementSelect }: BpmnEditorProps) {
   const containerRef = useRef<HTMLDivElement | null>(null)
   const modelerRef = useRef<DiagramInstance | null>(null)
   const lastImportedXml = useRef<string>('')
@@ -39,6 +41,8 @@ export function BpmnEditor({ xml, onChange, readonly = false }: BpmnEditorProps)
     const ModelerClass = readonly ? NavigatedViewer : BpmnModeler
     const modeler = new ModelerClass({ container: containerRef.current })
     modelerRef.current = modeler
+    // notify parent that modeler is ready
+    ;(onModelerReady as any)?.(modeler)
 
     const load = async () => {
       // Защита: не загружаем пустой или невалидный XML
@@ -65,6 +69,17 @@ export function BpmnEditor({ xml, onChange, readonly = false }: BpmnEditorProps)
             }
           })
         }
+
+        // Подписываемся на выбор элемента в любой режим
+        modeler.on && modeler.on('selection.changed', (event: any) => {
+          try {
+            const newSelection = event?.newSelection ?? []
+            const el = newSelection[0] ?? null
+            onElementSelect?.(el)
+          } catch (e) {
+            console.error('selection.changed handler error', e)
+          }
+        })
       } catch (err) {
         console.error('BpmnEditor importXML error:', err)
       }
