@@ -7,6 +7,7 @@ from uuid import UUID
 from pydantic import BaseModel, ConfigDict, Field
 
 from app.models.user_types import ProcessInstanceStatus
+from app.schemas.process_schema import ProcessSchemaRead
 
 
 class ProcessVariableInput(BaseModel):
@@ -66,6 +67,7 @@ class TaskBoardResponse(BaseModel):
 
 class TaskCompleteRequest(BaseModel):
     outcome: Literal["approved", "rejected"]
+    variables: list[ProcessVariableInput] = Field(default_factory=list)
 
 
 class ActivityStatus(BaseModel):
@@ -83,3 +85,9 @@ class ProcessStateResponse(BaseModel):
     process_instance_id: str
     flowable_instance_id: str
     activities: list[ActivityStatus]
+
+
+class TaskContextResponse(BaseModel):
+    task: TaskRead
+    schema: ProcessSchemaRead | None = None
+    variables: dict[str, object | None] = Field(default_factory=dict)

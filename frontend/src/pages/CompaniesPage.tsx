@@ -23,6 +23,7 @@ export function CompaniesPage() {
   const [isEmployeeModalOpen, setIsEmployeeModalOpen] = useState(false)
   const [employeeName, setEmployeeName] = useState('')
   const [employeeRoleId, setEmployeeRoleId] = useState('')
+  const [employeePhone, setEmployeePhone] = useState('')
 
   const companiesQuery = useQuery({
     queryKey: ['companies'],
@@ -371,7 +372,7 @@ export function CompaniesPage() {
               if (!selectedCompanyId || !employeeRoleId) {
                 return
               }
-              createEmployeeMutation.mutate({ name: employeeName, company_id: selectedCompanyId, role_id: employeeRoleId })
+              createEmployeeMutation.mutate({ name: employeeName, phone: employeePhone, company_id: selectedCompanyId, role_id: employeeRoleId })
             }}
           >
             <label className="block">
@@ -421,6 +422,16 @@ export function CompaniesPage() {
                   </option>
                 ))}
               </select>
+            </label>
+
+            <label className="block">
+              <span className="mb-2 block text-sm font-medium text-slate-700">Телефон</span>
+              <input
+                value={employeePhone}
+                onChange={(event) => setEmployeePhone(event.target.value)}
+                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3"
+                required
+              />
             </label>
 
             <button type="submit" className="rounded-2xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white">

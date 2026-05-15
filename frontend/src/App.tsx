@@ -12,7 +12,9 @@ import { EmployeesPage } from './pages/EmployeesPage'
 import { LoginPage } from './pages/LoginPage'
 import { ProcessDetailPage } from './pages/ProcessDetailPage'
 import { ProcessesPage } from './pages/ProcessesPage'
+import { SchemasPage } from './pages/SchemasPage'
 import { RolesPage } from './pages/RolesPage'
+import { TaskPage } from './pages/TaskPage'
 import { TasksPage } from './pages/TasksPage'
 import { TemplatesPage } from './pages/TemplatesPage'
 
@@ -63,8 +65,10 @@ export default function App() {
               <Route path="/employees" element={<PageErrorBoundary><EmployeesPage /></PageErrorBoundary>} />
               <Route path="/processes" element={<PageErrorBoundary><ProcessesPage /></PageErrorBoundary>} />
               <Route path="/processes/:id" element={<PageErrorBoundary><ProcessDetailPage /></PageErrorBoundary>} />
+              <Route path="/schemas" element={<PageErrorBoundary><SchemasPage /></PageErrorBoundary>} />
               <Route path="/templates" element={<PageErrorBoundary><TemplatesPage /></PageErrorBoundary>} />
               <Route path="/tasks" element={<PageErrorBoundary><TasksPage /></PageErrorBoundary>} />
+              <Route path="/tasks/:taskId" element={<PageErrorBoundary><TaskPage /></PageErrorBoundary>} />
             </Route>
           </Route>
           <Route path="*" element={<Navigate to="/processes" replace />} />

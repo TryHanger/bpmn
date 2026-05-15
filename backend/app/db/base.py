@@ -1,6 +1,7 @@
 from app.db.session import Base
 from app.models.company import Company
 from app.models.employee import Employee
+from app.models.process_schema import ProcessSchema, ProcessSchemaRole, ProcessSchemaVariable
 from app.models.refresh_token import RefreshToken
 from app.models.process_instance import ProcessInstance
 from app.models.role import Role
@@ -13,6 +14,9 @@ __all__ = [
 	"Company",
 	"Role",
 	"Employee",
+	"ProcessSchema",
+	"ProcessSchemaRole",
+	"ProcessSchemaVariable",
 	"User",
 	"RefreshToken",
 	"ProcessInstance",

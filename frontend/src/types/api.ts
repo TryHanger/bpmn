@@ -43,9 +43,37 @@ export interface TemplateRead {
   process_definition_key: string
   status: 'DRAFT' | 'DEPLOYED'
   current_version_id: string | null
+  schema_id: string | null
   versions: TemplateVersionRead[]
   created_at: string
   updated_at: string
+}
+
+export interface ProcessSchemaVariableRead {
+  id: string
+  name: string
+  label: string
+  type: string
+  required: boolean
+  readable_by_roles: string[]
+  order_index: number
+  role_id: string
+}
+
+export interface ProcessSchemaRoleRead {
+  id: string
+  role_name: string
+  display_name: string
+  order_index: number
+  variables: ProcessSchemaVariableRead[]
+}
+
+export interface ProcessSchemaRead {
+  id: string
+  name: string
+  description: string | null
+  created_at: string
+  roles: ProcessSchemaRoleRead[]
 }
 
 export interface TemplateListResponse {
@@ -76,6 +104,7 @@ export interface RoleResponse {
 export interface EmployeeResponse {
   id: string
   name: string
+  phone: string
   company_id: string
   role_id: string
   role_name: string
@@ -138,6 +167,12 @@ export interface TaskRead {
   claimed: boolean | null
 }
 
+export interface TaskContextResponse {
+  task: TaskRead
+  schema: ProcessSchemaRead | null
+  variables: Record<string, unknown>
+}
+
 export interface TaskBoardResponse {
   available: TaskRead[]
   claimed: TaskRead[]
@@ -155,6 +190,7 @@ export interface RoleCreateInput {
 
 export interface EmployeeCreateInput {
   name: string
+  phone: string
   company_id: string
   role_id: string
 }
@@ -174,4 +210,5 @@ export interface ProcessStartInput {
 
 export interface TaskCompleteInput {
   outcome: 'approved' | 'rejected'
+  variables?: ProcessVariableInput[]
 }

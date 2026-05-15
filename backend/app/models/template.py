@@ -26,6 +26,7 @@ class Template(Base):
         ForeignKey("template_versions.id", ondelete="SET NULL"),
         nullable=True,
     )
+    schema_id: Mapped[str | None] = mapped_column(String(36), ForeignKey("process_schemas.id", ondelete="SET NULL"), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
@@ -49,3 +50,4 @@ class Template(Base):
         post_update=True,
         overlaps="versions,template",
     )
+    schema = relationship("ProcessSchema", back_populates="templates")

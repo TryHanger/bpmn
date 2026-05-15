@@ -15,6 +15,7 @@ export function EmployeesPage() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [createdTempPassword, setCreatedTempPassword] = useState<string | null>(null)
   const [name, setName] = useState('')
+  const [phone, setPhone] = useState('')
   const [roleId, setRoleId] = useState('')
 
   const companiesQuery = useQuery({ queryKey: ['companies'], queryFn: getCompanies })
@@ -93,7 +94,7 @@ export function EmployeesPage() {
               if (!companyId || !roleId) {
                 return
               }
-              createMutation.mutate({ name, company_id: companyId, role_id: roleId })
+              createMutation.mutate({ name, phone, company_id: companyId, role_id: roleId })
             }}
           >
             <label className="block">
@@ -110,6 +111,10 @@ export function EmployeesPage() {
                   </option>
                 ))}
               </select>
+            </label>
+            <label className="block">
+              <span className="mb-2 block text-sm font-medium text-slate-700">Телефон</span>
+              <input value={phone} onChange={(event) => setPhone(event.target.value)} className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3" required />
             </label>
             <button type="submit" className="rounded-2xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white">
               {createMutation.isPending ? 'Создание...' : 'Создать'}

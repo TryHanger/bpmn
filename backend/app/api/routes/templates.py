@@ -2,8 +2,10 @@ from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, s
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.session import get_db_session
+from app.schemas.process_schema import TemplateSchemaUpdate
 from app.schemas.template import DeployTemplateResponse, TemplateListResponse, TemplateRead, TemplateVersionListResponse
 from app.services.template_service import TemplateService
+from app.services.schema_service import SchemaService
 
 router = APIRouter()
 
@@ -54,3 +56,12 @@ async def list_template_versions(template_id: str, db: AsyncSession = Depends(ge
 async def delete_template_version(version_id: str, db: AsyncSession = Depends(get_db_session)) -> None:
     service = TemplateService(db)
     await service.delete_template_version(version_id)
+
+
+@router.patch("/{template_id}/schema", response_model=TemplateRead)
+async def link_schema_to_template(
+    template_id: str,
+    payload: TemplateSchemaUpdate,
+    db: AsyncSession = Depends(get_db_session),
+) -> TemplateRead:
+    return await SchemaService(db).link_schema_to_template(template_id, payload.schema_id)

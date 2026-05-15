@@ -12,6 +12,7 @@ from app.db.base import Base
 from app.models.company import Company  # noqa: F401
 from app.models.employee import Employee  # noqa: F401
 from app.models.process_instance import ProcessInstance  # noqa: F401
+from app.models.process_schema import ProcessSchema, ProcessSchemaRole, ProcessSchemaVariable  # noqa: F401
 from app.models.refresh_token import RefreshToken  # noqa: F401
 from app.models.role import Role  # noqa: F401
 from app.models.template import Template  # noqa: F401

@@ -4,10 +4,11 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import { BpmnEditor } from '../components/BpmnEditor'
 import BpmnPropertiesPanel from '../components/BpmnPropertiesPanel'
-import { deleteTemplateVersion, deployTemplate, getTemplateVersions, getTemplates, uploadTemplate } from '../api/templates'
+import { deleteTemplateVersion, deployTemplate, getTemplateVersions, getTemplates, linkSchemaToTemplate, uploadTemplate } from '../api/templates'
 import { showToast } from '../lib/toast'
 import { useAuthStore } from '../store/authStore'
 import { getRoles } from '../api/roles'
+import { getSchema, getSchemas } from '../api/schemas'
 import type { TemplateRead, TemplateVersionRead } from '../types/api'
 
 const VERSION_STATUS_STYLES: Record<TemplateVersionRead['status'], string> = {
@@ -118,6 +119,7 @@ export function TemplatesPage() {
   }, [processName, templateNameTouched])
 
   const templatesQuery = useQuery({ queryKey: ['templates'], queryFn: getTemplates })
+  const schemasQuery = useQuery({ queryKey: ['schemas'], queryFn: getSchemas })
   const templateVersionsQuery = useQuery({
     queryKey: ['template-versions', selectedTemplateId],
     queryFn: () => getTemplateVersions(selectedTemplateId ?? ''),
@@ -131,6 +133,12 @@ export function TemplatesPage() {
     () => templates.find((template) => template.id === selectedTemplateId) ?? null,
     [selectedTemplateId, templates],
   )
+
+  const schemaQuery = useQuery({
+    queryKey: ['schema', selectedTemplate?.schema_id],
+    queryFn: () => getSchema(selectedTemplate!.schema_id!),
+    enabled: Boolean(selectedTemplate?.schema_id),
+  })
 
   const selectedVersion = useMemo(
     () => versions.find((version) => version.id === selectedVersionId) ?? null,
@@ -286,6 +294,24 @@ export function TemplatesPage() {
     },
     onError: (error) => {
       showToast(formatError(error, 'Не удалось удалить версию'), 'error')
+    },
+  })
+
+  const linkSchemaMutation = useMutation({
+    mutationFn: async (schemaId: string | null) => {
+      if (!selectedTemplate) {
+        throw new Error('Шаблон не выбран')
+      }
+
+      return linkSchemaToTemplate(selectedTemplate.id, schemaId)
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['templates'] })
+      await queryClient.invalidateQueries({ queryKey: ['template-versions', selectedTemplateId] })
+      showToast('Схема привязана', 'success')
+    },
+    onError: (error) => {
+      showToast(formatError(error, 'Не удалось привязать схему'), 'error')
     },
   })
 
@@ -682,6 +708,21 @@ export function TemplatesPage() {
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2">
+                  <div className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2">
+                    <span className="text-sm text-slate-500">Схема:</span>
+                    <select
+                      value={selectedTemplate.schema_id ?? ''}
+                      onChange={(event) => void linkSchemaMutation.mutateAsync(event.target.value || null)}
+                      className="rounded-xl border border-slate-200 px-3 py-2 text-sm"
+                      disabled={linkSchemaMutation.isPending || schemasQuery.isLoading}
+                    >
+                      <option value="">— без схемы —</option>
+                      {schemasQuery.data?.map((schema) => (
+                        <option key={schema.id} value={schema.id}>{schema.name}</option>
+                      ))}
+                    </select>
+                  </div>
+
                   <button
                     type="button"
                     onClick={handleSave}
@@ -743,6 +784,7 @@ export function TemplatesPage() {
                     availableRoles={availableRoles}
                     modeler={modelerRef.current}
                     onXmlChange={(xml) => { handleEditorChange(xml) }}
+                      schema={schemaQuery.data ?? null}
                   />
                 </div>
               ) : (

@@ -29,6 +29,7 @@ class TemplateRead(BaseModel):
     process_definition_key: str
     status: TemplateStatus
     current_version_id: str | None
+    schema_id: str | None
     created_at: datetime
     updated_at: datetime
     versions: list[TemplateVersionRead] = Field(default_factory=list)

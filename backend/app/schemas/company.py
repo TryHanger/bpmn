@@ -36,6 +36,7 @@ class RoleResponse(BaseModel):
 
 class EmployeeCreate(BaseModel):
     name: str
+    phone: str
     company_id: UUID
     role_id: UUID
 
@@ -45,6 +46,7 @@ class EmployeeResponse(BaseModel):
 
     id: UUID
     name: str
+    phone: str
     company_id: UUID
     role_id: UUID
     role_name: str

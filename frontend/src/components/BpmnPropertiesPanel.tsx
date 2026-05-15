@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
+import type { ProcessSchemaRead } from '../types/api'
 
 interface BpmnPropertiesPanelProps {
   element: any | null
   availableRoles: string[]
   modeler: any | null
   onXmlChange?: (xml: string) => void
+  schema: ProcessSchemaRead | null
 }
 
 const ensureFlowableNamespace = (modeler: any) => {
@@ -21,7 +23,7 @@ const ensureFlowableNamespace = (modeler: any) => {
   }
 }
 
-export function BpmnPropertiesPanel({ element, availableRoles, modeler, onXmlChange }: BpmnPropertiesPanelProps) {
+export function BpmnPropertiesPanel({ element, availableRoles, modeler, onXmlChange, schema }: BpmnPropertiesPanelProps) {
   const businessObject = element?.businessObject ?? null
   const type = businessObject?.$type ?? null
 
@@ -160,6 +162,34 @@ export function BpmnPropertiesPanel({ element, availableRoles, modeler, onXmlCha
               <option key={r} value={r}>{r}</option>
             ))}
           </select>
+
+          {schema && assignee ? (() => {
+            const schemaRole = schema.roles.find((role) => role.role_name === assignee)
+            if (!schemaRole) return null
+
+            return (
+              <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                <div className="text-sm font-medium text-slate-700">Переменные роли</div>
+                <div className="mt-2 text-xs text-slate-500">Вводит на этом шаге:</div>
+                <div className="mt-2 space-y-1">
+                  {schemaRole.variables.map((variable) => (
+                    <div key={variable.id} className="flex items-center justify-between rounded-lg bg-white px-3 py-2">
+                      <div>
+                        <span className="text-xs font-mono font-semibold text-slate-700">{variable.name}</span>
+                        <span className="ml-2 text-xs text-slate-500">{variable.label}</span>
+                      </div>
+                      <span className="rounded-full bg-slate-200 px-2 py-0.5 text-[10px] text-slate-600">{variable.type}</span>
+                    </div>
+                  ))}
+                </div>
+                {schemaRole.variables.length > 0 ? (
+                  <div className="mt-2 text-xs text-slate-400">
+                    Видят: {[...new Set(schemaRole.variables.flatMap((variable) => variable.readable_by_roles))].join(', ') || '—'}
+                  </div>
+                ) : null}
+              </div>
+            )
+          })() : null}
 
           <div className="mt-3 text-xs text-slate-500">В XML будет записано:</div>
           <div className="mt-1 rounded-md bg-slate-50 px-3 py-2 text-xs font-mono text-slate-700">flowable:assignee="{assignee || ''}"</div>

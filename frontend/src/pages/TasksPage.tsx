@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react'
+import { Link } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import { claimTask, completeTask, getMyTasks } from '../api/tasks'
@@ -57,14 +58,19 @@ export function TasksPage() {
               <div key={task.id} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
                 <div className="text-base font-semibold text-slate-900">{task.name ?? task.id}</div>
                 <div className="mt-1 text-sm text-slate-500">{task.processName ?? '—'}</div>
-                <button
-                  type="button"
-                  onClick={() => claimMutation.mutate(task.id)}
-                  disabled={claimMutation.isPending}
-                  className="mt-3 rounded-2xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
-                >
-                  Взять задачу
-                </button>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <Link to={`/tasks/${task.id}`} className="rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700">
+                    Открыть
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => claimMutation.mutate(task.id)}
+                    disabled={claimMutation.isPending}
+                    className="rounded-2xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
+                  >
+                    Взять задачу
+                  </button>
+                </div>
               </div>
             ))}
           </div>
@@ -78,6 +84,9 @@ export function TasksPage() {
                 <div className="text-base font-semibold text-slate-900">{task.name ?? task.id}</div>
                 <div className="mt-1 text-sm text-slate-500">{task.processName ?? '—'}</div>
                 <div className="mt-3 flex flex-wrap gap-2">
+                  <Link to={`/tasks/${task.id}`} className="rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700">
+                    Открыть
+                  </Link>
                   <button
                     type="button"
                     onClick={() => completeMutation.mutate({ taskId: task.id, outcome: 'approved' })}

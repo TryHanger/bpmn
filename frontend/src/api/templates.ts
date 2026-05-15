@@ -31,3 +31,8 @@ export async function deployTemplate(templateId: string): Promise<DeployTemplate
 export async function deleteTemplateVersion(versionId: string): Promise<void> {
   await axiosInstance.delete(`/api/templates/versions/${versionId}`)
 }
+
+export async function linkSchemaToTemplate(templateId: string, schemaId: string | null): Promise<TemplateRead> {
+  const response = await axiosInstance.patch<TemplateRead>(`/api/templates/${templateId}/schema`, { schema_id: schemaId })
+  return response.data
+}

@@ -7,7 +7,7 @@ from app.api.deps import get_current_user
 from app.core.config import get_settings
 from app.db.session import get_db_session
 from app.models.user import User
-from app.schemas.process import TaskBoardResponse, TaskCompleteRequest
+from app.schemas.process import TaskBoardResponse, TaskCompleteRequest, TaskContextResponse
 from app.services.flowable import FlowableClient
 from app.services.task_service import TaskService
 
@@ -48,3 +48,12 @@ async def complete_task(
     db: AsyncSession = Depends(get_db_session),
 ) -> dict:
     return await TaskService(db, _flowable_client()).complete_task(task_id, payload, current_user)
+
+
+@router.get("/{task_id}/context", response_model=TaskContextResponse)
+async def get_task_context(
+    task_id: str,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db_session),
+) -> TaskContextResponse:
+    return await TaskService(db, _flowable_client()).get_task_context(task_id, current_user)

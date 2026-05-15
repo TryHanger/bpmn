@@ -93,6 +93,14 @@ class FlowableClient:
                 return {}
             return response.json()
 
+    async def get_process_instance_variables(self, process_instance_id: str) -> dict:
+        async with httpx.AsyncClient(base_url=self.base_url, auth=self.auth, timeout=30.0) as client:
+            response = await client.get(f"/service/runtime/process-instances/{process_instance_id}/variables")
+            response.raise_for_status()
+            if not response.content:
+                return {"data": []}
+            return response.json()
+
     async def list_runtime_tasks(self, params: dict | None = None) -> dict:
         async with httpx.AsyncClient(base_url=self.base_url, auth=self.auth, timeout=30.0) as client:
             response = await client.get("/service/runtime/tasks", params=params)
@@ -123,13 +131,13 @@ class FlowableClient:
                 return {}
             return response.json()
 
-    async def complete_task(self, task_id: str, *, variable_name: str, approved: bool) -> dict:
+    async def complete_task(self, task_id: str, *, variable_name: str, approved: bool, variables: list[dict] | None = None) -> dict:
         async with httpx.AsyncClient(base_url=self.base_url, auth=self.auth, timeout=30.0) as client:
             response = await client.post(
                 f"/service/runtime/tasks/{task_id}",
                 json={
                     "action": "complete",
-                    "variables": [{"name": variable_name, "value": approved}],
+                    "variables": ([{"name": variable_name, "value": approved}] + (variables or [])),
                 },
             )
             

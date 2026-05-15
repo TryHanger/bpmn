@@ -74,34 +74,22 @@ class CompanyService:
         if role.company_id != str(payload.company_id):
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Role does not belong to the specified company")
 
-        temp_password = secrets.token_urlsafe(8)
-        email = self._build_employee_email(payload.name, str(payload.company_id))
-
-        employee = Employee(phone="", name=payload.name, role_id=str(payload.role_id), company_id=str(payload.company_id))
+        # create employee with provided phone, but do not create a user or assign email/password
+        employee = Employee(phone=payload.phone, name=payload.name, role_id=str(payload.role_id), company_id=str(payload.company_id))
         self.session.add(employee)
-        await self.session.flush()
-
-        user = User(
-            email=email,
-            hashed_password=hash_password(temp_password),
-            role="employee",
-            employee_id=employee.id,
-            company_id=str(payload.company_id),
-        )
-        self.session.add(user)
         await self.session.commit()
         await self.session.refresh(employee)
-        await self.session.refresh(user)
 
         return EmployeeResponse(
             id=employee.id,
             name=employee.name,
+            phone=employee.phone,
             company_id=employee.company_id,
             role_id=employee.role_id,
             role_name=role.name,
             flowable_group=role.flowable_group,
-            user_id=user.id,
-            temp_password=temp_password,
+            user_id=None,
+            temp_password=None,
             created_at=employee.created_at,
             updated_at=employee.updated_at,
         )
@@ -121,6 +109,7 @@ class CompanyService:
                 EmployeeResponse(
                     id=employee.id,
                     name=employee.name,
+                    phone=employee.phone,
                     company_id=employee.company_id,
                     role_id=employee.role_id,
                     role_name=role.name,
