@@ -23,6 +23,15 @@ const ensureFlowableNamespace = (modeler: any) => {
   }
 }
 
+const OPERATORS = [
+  { value: '==', label: '== (равно)' },
+  { value: '!=', label: '!= (не равно)' },
+  { value: '>', label: '>  (больше)' },
+  { value: '>=', label: '>= (больше или равно)' },
+  { value: '<', label: '<  (меньше)' },
+  { value: '<=', label: '<= (меньше или равно)' },
+] as const
+
 export function BpmnPropertiesPanel({ element, availableRoles, modeler, onXmlChange, schema }: BpmnPropertiesPanelProps) {
   const businessObject = element?.businessObject ?? null
   const type = businessObject?.$type ?? null
@@ -32,25 +41,64 @@ export function BpmnPropertiesPanel({ element, availableRoles, modeler, onXmlCha
   const [assignee, setAssignee] = useState('')
 
   // SequenceFlow condition state
-  const [variable, setVariable] = useState('')
-  const [value, setValue] = useState<'true' | 'false'>('true')
+  const [leftOperand, setLeftOperand] = useState('')
+  const [operator, setOperator] = useState<(typeof OPERATORS)[number]['value']>('==')
+  const [rightType, setRightType] = useState<'variable' | 'constant'>('variable')
+  const [rightOperand, setRightOperand] = useState('')
 
-  // Compute approval variables from diagram
-  const approvalVars = useMemo<string[]>(() => {
-    if (!modeler) return [] as string[]
-    try {
-      const elementRegistry = modeler.get('elementRegistry')
-      const all = elementRegistry.getAll() || []
-      const roles = all
-        .filter((el: any) => el.type === 'bpmn:UserTask')
-        .map((el: any) => el.businessObject?.['flowable:assignee'] ?? el.businessObject?.assignee)
-        .filter(Boolean)
-        .map((r: string) => `${r}Approved`)
-      return Array.from(new Set(roles))
-    } catch (e) {
-      return []
+  const availableVars = useMemo<string[]>(() => {
+    const vars = new Set<string>()
+
+    if (modeler) {
+      try {
+        const elementRegistry = modeler.get('elementRegistry')
+        elementRegistry
+          .getAll()
+          .filter((el: any) => el.type === 'bpmn:UserTask')
+          .forEach((el: any) => {
+            const role = el.businessObject?.['flowable:assignee'] ?? el.businessObject?.assignee
+            if (role) vars.add(`${role}Approved`)
+          })
+      } catch (e) {
+        // ignore
+      }
     }
-  }, [modeler])
+
+    if (schema) {
+      schema.roles.forEach((role) => {
+        role.variables.forEach((variable) => vars.add(variable.name))
+      })
+    }
+
+    return Array.from(vars).sort()
+  }, [modeler, schema])
+
+  const buildExpression = () => {
+    if (!leftOperand.trim() || !rightOperand.trim()) return ''
+    const right = rightOperand.trim()
+    return `\${${leftOperand.trim()} ${operator} ${right}}`
+  }
+
+  const parseCondition = (body: string) => {
+    const inner = body.replace(/^\$\{/, '').replace(/\}$/, '').trim()
+    const match = inner.match(/^(\w+)\s*(==|!=|>=|<=|>|<)\s*(.+)$/)
+
+    if (!match) {
+      setLeftOperand('')
+      setOperator('==')
+      setRightType('variable')
+      setRightOperand('')
+      return
+    }
+
+    setLeftOperand(match[1])
+    setOperator(match[2] as (typeof OPERATORS)[number]['value'])
+
+    const right = match[3].trim()
+    const isConstant = /^(\d+(\.\d+)?|true|false|'.*'|".*")$/.test(right)
+    setRightType(isConstant ? 'constant' : 'variable')
+    setRightOperand(right)
+  }
 
   useEffect(() => {
     if (!businessObject) return
@@ -63,14 +111,7 @@ export function BpmnPropertiesPanel({ element, availableRoles, modeler, onXmlCha
 
     if (type === 'bpmn:SequenceFlow') {
       const currentCondition = businessObject?.conditionExpression?.body ?? ''
-      const match = currentCondition.match(/\$\{(\w+)\s*==\s*(true|false)\}/)
-      if (match) {
-        setVariable(match[1])
-        setValue(match[2] as 'true' | 'false')
-      } else {
-        setVariable('')
-        setValue('true')
-      }
+      parseCondition(currentCondition)
     }
   }, [businessObject, type])
 
@@ -114,19 +155,16 @@ export function BpmnPropertiesPanel({ element, availableRoles, modeler, onXmlCha
     }
   }
 
-  const updateCondition = (variableName: string, variableValue: 'true' | 'false') => {
+  const updateCondition = (expression: string) => {
     if (!modeler || !element) return
     try {
-      const bo = element.businessObject
       const modeling = modeler.get('modeling')
       const moddle = modeler.get('moddle')
-      const body = '${' + variableName + ' == ' + variableValue + '}'
-      const conditionExpression = moddle.create('bpmn:FormalExpression', { body })
+      const conditionExpression = moddle.create('bpmn:FormalExpression', { body: expression })
       modeling.updateProperties(element, { conditionExpression })
       // Уведомляем modeler об изменении
       modeler.get('eventBus').fire('elements.changed', { elements: [element] })
-      setVariable(variableName)
-      setValue(variableValue)
+      parseCondition(expression)
     } catch (e) {
       console.error('updateCondition error', e)
     }
@@ -198,36 +236,99 @@ export function BpmnPropertiesPanel({ element, availableRoles, modeler, onXmlCha
         <div>
           <div className="text-sm font-semibold">Условие перехода</div>
 
-          <div className="mt-4 text-sm font-medium">Переменная</div>
+          <div className="mt-4 text-sm font-medium">Левый операнд</div>
           <input
-            list="approvalVarsList"
-            value={variable}
-            onChange={(e) => setVariable(e.target.value)}
-            placeholder="Введите или выберите переменную (e.g. managerApproved)"
+            list="vars-list-left"
+            value={leftOperand}
+            onChange={(e) => setLeftOperand(e.target.value)}
+            placeholder="priceCeo"
             className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm"
           />
-          <datalist id="approvalVarsList">
-            {approvalVars.map((v) => (
+          <datalist id="vars-list-left">
+            {availableVars.map((v) => (
               <option key={v} value={v} />
             ))}
           </datalist>
 
-          <div className="mt-4 text-sm font-medium">Значение</div>
-          <select value={value} onChange={(e) => setValue(e.target.value as 'true' | 'false')} className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm">
-            <option value="true">true</option>
-            <option value="false">false</option>
+          <div className="mt-4 text-sm font-medium">Оператор</div>
+          <select
+            value={operator}
+            onChange={(e) => setOperator(e.target.value as (typeof OPERATORS)[number]['value'])}
+            className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm"
+          >
+            {OPERATORS.map((op) => (
+              <option key={op.value} value={op.value}>
+                {op.label}
+              </option>
+            ))}
           </select>
 
+          <div className="mt-4 text-sm font-medium">Правый операнд</div>
+          <div className="mt-2 flex gap-4">
+            <label className="flex cursor-pointer items-center gap-2 text-sm">
+              <input
+                type="radio"
+                checked={rightType === 'variable'}
+                onChange={() => {
+                  setRightType('variable')
+                  setRightOperand('')
+                }}
+              />
+              Переменная
+            </label>
+            <label className="flex cursor-pointer items-center gap-2 text-sm">
+              <input
+                type="radio"
+                checked={rightType === 'constant'}
+                onChange={() => {
+                  setRightType('constant')
+                  setRightOperand('')
+                }}
+              />
+              Константа
+            </label>
+          </div>
+
+          {rightType === 'variable' ? (
+            <>
+              <input
+                list="vars-list-right"
+                value={rightOperand}
+                onChange={(e) => setRightOperand(e.target.value)}
+                placeholder="priceManager"
+                className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm"
+              />
+              <datalist id="vars-list-right">
+                {availableVars.map((v) => (
+                  <option key={v} value={v} />
+                ))}
+              </datalist>
+            </>
+          ) : (
+            <input
+              value={rightOperand}
+              onChange={(e) => setRightOperand(e.target.value)}
+              placeholder="например: 100000, true, 'текст'"
+              className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm"
+            />
+          )}
+
           <div className="mt-4 text-sm font-medium">conditionExpression</div>
-          <div className="mt-2 rounded-md bg-slate-50 px-3 py-2 text-xs font-mono text-slate-700">{variable ? `\${${variable} == ${value}}` : ''}</div>
+          <div className="mt-2 min-h-[36px] rounded-md bg-slate-50 px-3 py-2 text-xs font-mono text-slate-700">
+            {buildExpression() || <span className="text-slate-400">заполните поля выше</span>}
+          </div>
           <div className="mt-4 flex justify-end">
             <button
               type="button"
-              onClick={() => variable && updateCondition(variable.trim(), value)}
-              disabled={!variable.trim()}
+              onClick={() => {
+                const expression = buildExpression()
+                if (!expression) return
+                updateCondition(expression)
+              }}
+              disabled={!leftOperand.trim() || !rightOperand.trim()}
               className={[
                 'rounded-2xl px-4 py-2 text-sm font-semibold',
-                variable.trim() ? 'bg-slate-900 text-white' : 'bg-slate-200 text-slate-500 cursor-not-allowed',
+                leftOperand.trim() && rightOperand.trim() ? 'bg-slate-900 text-white' : 'bg-slate-200 text-slate-500 cursor-not-allowed',
               ].join(' ')}
             >
               Применить
