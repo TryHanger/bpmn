@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+                  xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" 
+                  xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" 
+                  xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" 
+                  xmlns:di="http://www.omg.org/spec/DD/20100524/DI" 
+                  id="Definitions_1" 
+                  targetNamespace="http://bpmn.io/schema/bpmn">
+
+  <bpmn:process id="Process_main" isExecutable="false">
+
+    <!-- ==================== Основной процесс ==================== -->
+    <bpmn:startEvent id="StartEvent_1">
+      <bpmn:outgoing>Flow_start</bpmn:outgoing>
+    </bpmn:startEvent>
+
+    <bpmn:userTask id="Task_Main" name="Основная задача">
+      <bpmn:incoming>Flow_start</bpmn:incoming>
+      <bpmn:outgoing>Flow_to_throw</bpmn:outgoing>
+    </bpmn:userTask>
+
+    <!-- Отправка сообщения -->
+    <bpmn:intermediateThrowEvent id="ThrowMessage" name="Отправить сообщение">
+      <bpmn:incoming>Flow_to_throw</bpmn:incoming>
+      <bpmn:outgoing>Flow_to_end</bpmn:outgoing>
+      <bpmn:messageEventDefinition id="MessageThrowDef" messageRef="Message_123"/>
+    </bpmn:intermediateThrowEvent>
+
+    <bpmn:endEvent id="EndMain">
+      <bpmn:incoming>Flow_to_end</bpmn:incoming>
+    </bpmn:endEvent>
+
+    <bpmn:sequenceFlow id="Flow_start" sourceRef="StartEvent_1" targetRef="Task_Main" />
+    <bpmn:sequenceFlow id="Flow_to_throw" sourceRef="Task_Main" targetRef="ThrowMessage" />
+    <bpmn:sequenceFlow id="Flow_to_end" sourceRef="ThrowMessage" targetRef="EndMain" />
+
+    <!-- ==================== Ветка, ожидающая сообщение ==================== -->
+    <bpmn:intermediateCatchEvent id="CatchMessage" name="Ждать сообщение">
+      <bpmn:messageEventDefinition id="MessageCatchDef" messageRef="Message_123"/>
+    </bpmn:intermediateCatchEvent>
+
+    <bpmn:userTask id="Task_Second" name="Задача после сообщения">
+      <bpmn:incoming>Flow_catch_to_task</bpmn:incoming>
+      <bpmn:outgoing>Flow_to_end2</bpmn:outgoing>
+    </bpmn:userTask>
+
+    <bpmn:endEvent id="EndSecond" />
+
+    <bpmn:sequenceFlow id="Flow_catch_to_task" sourceRef="CatchMessage" targetRef="Task_Second" />
+    <bpmn:sequenceFlow id="Flow_to_end2" sourceRef="Task_Second" targetRef="EndSecond" />
+
+  </bpmn:process>
+
+  <!-- Сообщение (важно объявить) -->
+  <bpmn:message id="Message_123" name="MyMessage" />
+
+  <!-- Диаграмма (можно потом подправить в bpmn.io) -->
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_main">
+      <!-- Здесь будут координаты элементов -->
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

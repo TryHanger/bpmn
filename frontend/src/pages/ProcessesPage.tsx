@@ -144,7 +144,7 @@ export function ProcessesPage() {
     setVariables((current) => current.filter((_, i) => i !== index))
   }
 
-  const processOptions = availableTemplates.length > 0 ? availableTemplates : templatesQuery.data ?? []
+  const processOptions = templatesQuery.data ?? []
 
   return (
     <div className="space-y-6">
@@ -207,7 +207,7 @@ export function ProcessesPage() {
       {isModalOpen ? (
         <Modal title="Запустить процесс" onClose={() => setIsModalOpen(false)}>
           <form
-            className="space-y-4"
+            className="space-y-4 max-h-[70vh] overflow-y-auto pr-1"
             onSubmit={(event) => {
               event.preventDefault()
               if (!companyId || !selectedTemplateKey) {

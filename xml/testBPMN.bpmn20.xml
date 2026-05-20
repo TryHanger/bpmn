@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xmlns:flowable="http://flowable.org/bpmn"
+             xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+             xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+             xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
+             targetNamespace="http://example.com">
+
+  <message id="msg_testPool" name="Test Pool Message" />
+
+  <!-- ==================== ПРОЦЕСС 1 - ОТПРАВИТЕЛЬ ==================== -->
+  <process id="senderProcess" name="Sender Process" isExecutable="true">
+
+    <startEvent id="start1" name="Start" />
+    <userTask id="hrTask" name="Проверка HR" flowable:assignee="hr" />
+    
+    <sequenceFlow id="f1" sourceRef="start1" targetRef="hrTask" />
+    <sequenceFlow id="f2" sourceRef="hrTask" targetRef="endMsg" />
+
+    <endEvent id="endMsg" name="Отправить сообщение">
+      <messageEventDefinition id="msgEnd" messageRef="msg_testPool" />
+    </endEvent>
+  </process>
+
+  <!-- ==================== ПРОЦЕСС 2 - ПОЛУЧАТЕЛЬ ==================== -->
+  <process id="receiverProcess" name="Receiver Process" isExecutable="true">
+
+    <startEvent id="startByMsg" name="Запущен по сообщению">
+      <messageEventDefinition id="msgStart" messageRef="msg_testPool" />
+    </startEvent>
+
+    <userTask id="managerTask" name="Задача Менеджера" flowable:assignee="manager" />
+
+    <sequenceFlow id="f3" sourceRef="startByMsg" targetRef="managerTask" />
+    <sequenceFlow id="f4" sourceRef="managerTask" targetRef="end2" />
+
+    <endEvent id="end2" name="End" />
+  </process>
+
+</definitions>

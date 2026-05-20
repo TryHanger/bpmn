@@ -29,3 +29,26 @@ a {
 * {
   box-sizing: border-box;
 }
+
+/* bpmn-js container clips the canvas, while popups/overlays stay on top inside it. */
+.bjs-container {
+  overflow: hidden !important;
+  position: relative !important;
+}
+
+.djs-container,
+.djs-overlay-container {
+  overflow: visible !important;
+}
+
+.djs-context-pad {
+  z-index: 1000 !important;
+}
+
+.djs-popup {
+  z-index: 1001 !important;
+}
+
+.djs-palette {
+  z-index: 999 !important;
+}

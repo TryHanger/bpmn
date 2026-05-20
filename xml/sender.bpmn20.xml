@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xmlns:flowable="http://flowable.org/bpmn"
+             xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+             xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+             xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
+             targetNamespace="http://example.com">
+
+  <process id="mainProcess" name="Главный процесс" isExecutable="true">
+
+    <startEvent id="startEvent1" name="Start" />
+
+    <userTask id="hrTask" 
+              name="Задача HR" 
+              flowable:assignee="hr" />
+
+    <!-- Call Activity - вызывает другой процесс -->
+    <callActivity id="callSubProcess" 
+                  name="Вызвать подпроцесс"
+                  calledElement="subProcess" />
+
+    <userTask id="finalTask" 
+              name="Финальная задача" 
+              flowable:assignee="manager" />
+
+    <endEvent id="endEvent" name="End" />
+
+    <sequenceFlow id="flow1" sourceRef="startEvent1" targetRef="hrTask" />
+    <sequenceFlow id="flow2" sourceRef="hrTask" targetRef="callSubProcess" />
+    <sequenceFlow id="flow3" sourceRef="callSubProcess" targetRef="finalTask" />
+    <sequenceFlow id="flow4" sourceRef="finalTask" targetRef="endEvent" />
+
+  </process>
+
+  <bpmndi:BPMNDiagram id="BPMNDiagram_main">
+    <bpmndi:BPMNPlane id="BPMNPlane_main" bpmnElement="mainProcess">
+      <bpmndi:BPMNShape id="start_di" bpmnElement="startEvent1">
+        <dc:Bounds x="150" y="100" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="hr_di" bpmnElement="hrTask">
+        <dc:Bounds x="250" y="80" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="call_di" bpmnElement="callSubProcess">
+        <dc:Bounds x="400" y="80" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="final_di" bpmnElement="finalTask">
+        <dc:Bounds x="550" y="80" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="end_di" bpmnElement="endEvent">
+        <dc:Bounds x="700" y="100" width="36" height="36" />
+      </bpmndi:BPMNShape>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+
+</definitions>

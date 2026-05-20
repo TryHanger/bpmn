@@ -23,6 +23,7 @@ export function BpmnEditor({ xml, onChange, readonly = false, onModelerReady, on
   const containerRef = useRef<HTMLDivElement | null>(null)
   const modelerRef = useRef<DiagramInstance | null>(null)
   const lastImportedXml = useRef<string>('')
+  const isInternalChange = useRef(false)
   const destroyedRef = useRef(false)
   const initializedRef = useRef(false)
 
@@ -44,6 +45,22 @@ export function BpmnEditor({ xml, onChange, readonly = false, onModelerReady, on
     // notify parent that modeler is ready
     ;(onModelerReady as any)?.(modeler)
 
+    const resizeCanvas = () => {
+      try {
+        modelerRef.current?.get('canvas')?.resizeTo?.()
+      } catch (e) {
+        // ignore resize errors while the canvas is initializing
+      }
+    }
+
+    const resizeObserver = new ResizeObserver(() => {
+      resizeCanvas()
+    })
+
+    if (containerRef.current) {
+      resizeObserver.observe(containerRef.current)
+    }
+
     const load = async () => {
       // Защита: не загружаем пустой или невалидный XML
       if (!isValidBpmnXml(xml)) {
@@ -55,17 +72,23 @@ export function BpmnEditor({ xml, onChange, readonly = false, onModelerReady, on
         await modeler.importXML(xml)
         lastImportedXml.current = xml
         initializedRef.current = true
+        resizeCanvas()
 
         // Подписываемся на изменения только в режиме редактирования
         if (!readonly) {
           modeler.on('commandStack.changed', async () => {
             if (destroyedRef.current) return
+            isInternalChange.current = true
             try {
               const { xml: updatedXml } = await modeler.saveXML({ format: true })
               lastImportedXml.current = updatedXml
               onChange?.(updatedXml)
             } catch (e) {
               console.error('saveXML error:', e)
+            } finally {
+              setTimeout(() => {
+                isInternalChange.current = false
+              }, 0)
             }
           })
         }
@@ -88,6 +111,7 @@ export function BpmnEditor({ xml, onChange, readonly = false, onModelerReady, on
     load()
 
     return () => {
+      resizeObserver.disconnect()
       destroyedRef.current = true
       modeler.destroy()
       modelerRef.current = null
@@ -100,6 +124,7 @@ export function BpmnEditor({ xml, onChange, readonly = false, onModelerReady, on
     if (!initializedRef.current) return  // ← ждём завершения Эффекта 1
     if (!isValidBpmnXml(xml)) return
     if (xml === lastImportedXml.current) return
+    if (isInternalChange.current) return
 
     const load = async () => {
       try {

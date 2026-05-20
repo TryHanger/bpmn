@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xmlns:flowable="http://flowable.org/bpmn"
+             xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+             xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+             xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
+             targetNamespace="http://example.com">
+
+  <process id="subProcess" name="Подпроцесс (Receiver)" isExecutable="true">
+
+    <startEvent id="startEvent1" name="Start (from Call Activity)" />
+
+    <userTask id="managerTask" 
+              name="Задача Менеджера" 
+              flowable:assignee="manager" />
+
+    <endEvent id="endEvent" name="End" />
+
+    <sequenceFlow id="flow1" sourceRef="startEvent1" targetRef="managerTask" />
+    <sequenceFlow id="flow2" sourceRef="managerTask" targetRef="endEvent" />
+
+  </process>
+
+  <bpmndi:BPMNDiagram id="BPMNDiagram_sub">
+    <bpmndi:BPMNPlane id="BPMNPlane_sub" bpmnElement="subProcess">
+      <bpmndi:BPMNShape id="start_di" bpmnElement="startEvent1">
+        <dc:Bounds x="150" y="100" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="task_di" bpmnElement="managerTask">
+        <dc:Bounds x="250" y="80" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="end_di" bpmnElement="endEvent">
+        <dc:Bounds x="400" y="100" width="36" height="36" />
+      </bpmndi:BPMNShape>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+
+</definitions>

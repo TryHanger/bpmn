@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xmlns:flowable="http://flowable.org/bpmn"
+             xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+             xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+             xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
+             targetNamespace="http://example.com">
+
+  <!-- ====================== СООБЩЕНИЕ ====================== -->
+  <message id="msg_startHandler" name="Start Handler Process" />
+
+  <!-- ====================== ГЛАВНЫЙ ПРОЦЕСС ====================== -->
+  <process id="approvalMainProcess" name="Approval Main Process" isExecutable="true">
+
+    <startEvent id="mainStart" name="Start" />
+
+    <userTask id="hrReviewTask" 
+              name="Проверка HR" 
+              flowable:assignee="hr" />
+
+    <sequenceFlow id="flow1" sourceRef="mainStart" targetRef="hrReviewTask" />
+    <sequenceFlow id="flow2" sourceRef="hrReviewTask" targetRef="endMessage" />
+
+    <!-- Message End Event -->
+    <endEvent id="endMessage" name="Запустить обработчик">
+      <messageEventDefinition id="msgEndDef" messageRef="msg_startHandler" />
+    </endEvent>
+
+  </process>
+
+  <!-- ====================== ОБРАБОТЧИК (отдельный процесс) ====================== -->
+  <process id="notificationHandlerProcess" name="Notification Handler Process" isExecutable="true">
+
+    <!-- Message Start Event (на верхнем уровне!) -->
+    <startEvent id="handlerStart" name="Запущен по сообщению">
+      <messageEventDefinition id="msgStartDef" messageRef="msg_startHandler" />
+    </startEvent>
+
+    <userTask id="managerApprovalTask" 
+              name="Одобрение Менеджером" 
+              flowable:assignee="manager" />
+
+    <sequenceFlow id="flow3" sourceRef="handlerStart" targetRef="managerApprovalTask" />
+    <sequenceFlow id="flow4" sourceRef="managerApprovalTask" targetRef="handlerEnd" />
+
+    <endEvent id="handlerEnd" name="End" />
+
+  </process>
+
+  <!-- ====================== ДИАГРАММА ====================== -->
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="approvalMainProcess">
+
+      <!-- Главный процесс -->
+      <bpmndi:BPMNShape id="mainStart_di" bpmnElement="mainStart">
+        <dc:Bounds x="150" y="100" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="hrTask_di" bpmnElement="hrReviewTask">
+        <dc:Bounds x="250" y="80" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="endMsg_di" bpmnElement="endMessage">
+        <dc:Bounds x="400" y="100" width="36" height="36" />
+      </bpmndi:BPMNShape>
+
+      <!-- Второй процесс (ниже) -->
+      <bpmndi:BPMNShape id="handlerStart_di" bpmnElement="handlerStart">
+        <dc:Bounds x="150" y="280" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="managerTask_di" bpmnElement="managerApprovalTask">
+        <dc:Bounds x="250" y="260" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="handlerEnd_di" bpmnElement="handlerEnd">
+        <dc:Bounds x="400" y="280" width="36" height="36" />
+      </bpmndi:BPMNShape>
+
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+
+</definitions>

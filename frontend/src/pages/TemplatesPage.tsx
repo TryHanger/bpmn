@@ -51,8 +51,27 @@ function buildXmlFile(templateName: string, xml: string): File {
   return new File([xml], `${templateName}.bpmn20.xml`, { type: 'application/xml' })
 }
 
-function generateEmptyBpmnXml(processId: string, processName: string): string {
-  return `<?xml version="1.0" encoding="UTF-8"?>
+function escapeXmlAttr(value: string): string {
+  return value.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+}
+
+function generateEmptyBpmnXml(
+  processId: string,
+  processName: string,
+  options?: {
+    addMessageLink?: boolean
+    messageName?: string
+    secondProcessId?: string
+    secondProcessName?: string
+  },
+): string {
+  const addMessageLink = options?.addMessageLink ?? false
+  const messageName = options?.messageName?.trim() || `Start${processId}`
+  const secondProcessId = options?.secondProcessId?.trim() || `${processId}Handler`
+  const secondProcessName = options?.secondProcessName?.trim() || `${processName} Handler`
+
+  if (!addMessageLink) {
+    return `<?xml version="1.0" encoding="UTF-8"?>
 <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
              xmlns:flowable="http://flowable.org/bpmn"
@@ -76,6 +95,76 @@ function generateEmptyBpmnXml(processId: string, processName: string): string {
           <omgdc:Bounds x="155" y="125" width="30" height="14"/>
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+
+</definitions>`
+  }
+
+  const messageId = messageName
+  const messagePrefixedName = messageName
+
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xmlns:flowable="http://flowable.org/bpmn"
+             xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+             xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+             xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+             targetNamespace="http://www.activiti.org/test">
+
+  <message id="${escapeXmlAttr(messageId)}" name="${escapeXmlAttr(messagePrefixedName)}"/>
+
+  <process id="${escapeXmlAttr(processId)}" name="${escapeXmlAttr(processName)}" isExecutable="true">
+    <startEvent id="${escapeXmlAttr(processId)}_start" name="Start">
+      <outgoing>${escapeXmlAttr(processId)}_flow1</outgoing>
+    </startEvent>
+    <sequenceFlow id="${escapeXmlAttr(processId)}_flow1"
+                  sourceRef="${escapeXmlAttr(processId)}_start"
+                  targetRef="${escapeXmlAttr(processId)}_msgEnd"/>
+    <endEvent id="${escapeXmlAttr(processId)}_msgEnd" name="${escapeXmlAttr(messageName)}">
+      <incoming>${escapeXmlAttr(processId)}_flow1</incoming>
+      <messageEventDefinition id="${escapeXmlAttr(processId)}_msgDef"
+              messageRef="${escapeXmlAttr(messageId)}"/>
+    </endEvent>
+  </process>
+
+  <process id="${escapeXmlAttr(secondProcessId)}" name="${escapeXmlAttr(secondProcessName)}" isExecutable="true">
+    <startEvent id="${escapeXmlAttr(secondProcessId)}_start" name="${escapeXmlAttr(messageName)}">
+      <outgoing>${escapeXmlAttr(secondProcessId)}_flow1</outgoing>
+      <messageEventDefinition id="${escapeXmlAttr(secondProcessId)}_msgDef"
+              messageRef="${escapeXmlAttr(messageId)}"/>
+    </startEvent>
+    <sequenceFlow id="${escapeXmlAttr(secondProcessId)}_flow1"
+                  sourceRef="${escapeXmlAttr(secondProcessId)}_start"
+                  targetRef="${escapeXmlAttr(secondProcessId)}_end"/>
+    <endEvent id="${escapeXmlAttr(secondProcessId)}_end" name="End">
+      <incoming>${escapeXmlAttr(secondProcessId)}_flow1</incoming>
+    </endEvent>
+  </process>
+
+  <bpmndi:BPMNDiagram id="BPMNDiagram_${escapeXmlAttr(processId)}">
+    <bpmndi:BPMNPlane id="BPMNPlane_${escapeXmlAttr(processId)}" bpmnElement="${escapeXmlAttr(processId)}">
+      <bpmndi:BPMNShape id="${escapeXmlAttr(processId)}_start_di" bpmnElement="${escapeXmlAttr(processId)}_start">
+        <omgdc:Bounds x="152" y="82" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="${escapeXmlAttr(processId)}_msgEnd_di" bpmnElement="${escapeXmlAttr(processId)}_msgEnd">
+        <omgdc:Bounds x="352" y="82" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="${escapeXmlAttr(processId)}_flow1_di" bpmnElement="${escapeXmlAttr(processId)}_flow1">
+        <omgdi:waypoint x="188" y="100"/>
+        <omgdi:waypoint x="352" y="100"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="${escapeXmlAttr(secondProcessId)}_start_di" bpmnElement="${escapeXmlAttr(secondProcessId)}_start">
+        <omgdc:Bounds x="152" y="242" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="${escapeXmlAttr(secondProcessId)}_end_di" bpmnElement="${escapeXmlAttr(secondProcessId)}_end">
+        <omgdc:Bounds x="352" y="242" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="${escapeXmlAttr(secondProcessId)}_flow1_di" bpmnElement="${escapeXmlAttr(secondProcessId)}_flow1">
+        <omgdi:waypoint x="188" y="260"/>
+        <omgdi:waypoint x="352" y="260"/>
+      </bpmndi:BPMNEdge>
     </bpmndi:BPMNPlane>
   </bpmndi:BPMNDiagram>
 
@@ -111,12 +200,25 @@ export function TemplatesPage() {
   const [templateName, setTemplateName] = useState('')
   const [processIdError, setProcessIdError] = useState('')
   const [templateNameTouched, setTemplateNameTouched] = useState(false)
+  const [addMessageLink, setAddMessageLink] = useState(false)
+  const [messageName, setMessageName] = useState('')
+  const [secondProcessId, setSecondProcessId] = useState('')
+  const [secondProcessName, setSecondProcessName] = useState('')
 
   useEffect(() => {
     if (!templateNameTouched) {
       setTemplateName(processName)
     }
   }, [processName, templateNameTouched])
+
+  useEffect(() => {
+    if (addMessageLink && processId) {
+      const capitalizedProcessId = processId.charAt(0).toUpperCase() + processId.slice(1)
+      setMessageName(`Start${capitalizedProcessId}`)
+      setSecondProcessId(`${processId}Handler`)
+      setSecondProcessName(`${processName} Handler`)
+    }
+  }, [addMessageLink, processId, processName])
 
   const templatesQuery = useQuery({ queryKey: ['templates'], queryFn: getTemplates })
   const schemasQuery = useQuery({ queryKey: ['schemas'], queryFn: getSchemas })
@@ -127,6 +229,13 @@ export function TemplatesPage() {
   })
 
   const templates = templatesQuery.data ?? []
+  const deployedTemplates = useMemo(
+    () =>
+      templates
+        .filter((template) => template.status === 'DEPLOYED')
+        .map((template) => ({ key: template.process_definition_key, name: template.name })),
+    [templates],
+  )
   const versions = useMemo(() => sortVersions(templateVersionsQuery.data ?? []), [templateVersionsQuery.data])
 
   const selectedTemplate = useMemo(
@@ -333,6 +442,10 @@ export function TemplatesPage() {
     setTemplateName('')
     setProcessIdError('')
     setTemplateNameTouched(false)
+    setAddMessageLink(false)
+    setMessageName('')
+    setSecondProcessId('')
+    setSecondProcessName('')
   }
 
   const handleOpenCreateModal = () => {
@@ -342,6 +455,10 @@ export function TemplatesPage() {
     setTemplateName('')
     setProcessIdError('')
     setTemplateNameTouched(false)
+    setAddMessageLink(false)
+    setMessageName('')
+    setSecondProcessId('')
+    setSecondProcessName('')
   }
 
   const handleTemplateNameChange = (value: string) => {
@@ -368,7 +485,18 @@ export function TemplatesPage() {
       return
     }
 
-    const xml = generateEmptyBpmnXml(normalizedProcessId, normalizedProcessName)
+    const xml = generateEmptyBpmnXml(
+      normalizedProcessId,
+      normalizedProcessName,
+      addMessageLink
+        ? {
+            addMessageLink: true,
+            messageName: messageName.trim() || `Start${normalizedProcessId}`,
+            secondProcessId: secondProcessId.trim() || `${normalizedProcessId}Handler`,
+            secondProcessName: secondProcessName.trim() || `${normalizedProcessName} Handler`,
+          }
+        : undefined,
+    )
     const file = new File([xml], `${normalizedProcessId}.bpmn20.xml`, { type: 'application/xml' })
 
     await uploadMutation.mutateAsync({ file, templateName: normalizedTemplateName })
@@ -414,6 +542,33 @@ export function TemplatesPage() {
       return
     }
 
+    const validateXmlBeforeDeploy = (xml: string): string[] => {
+      const warnings: string[] = []
+
+      const emptyMsgDef = /<messageEventDefinition[^>]*(?!\smessageRef)[^>]*\/>/g
+      if (emptyMsgDef.test(xml)) {
+        warnings.push('Есть Message события без messageRef — Flowable не сможет их связать')
+      }
+
+      const messageRefs = [...xml.matchAll(/messageRef="([^"]+)"/g)].map((match) => match[1])
+      const declaredMessages = [...xml.matchAll(/<message[^>]+id="([^"]+)"/g)].map((match) => match[1])
+      messageRefs.forEach((ref) => {
+        if (!declaredMessages.includes(ref)) {
+          warnings.push(`messageRef="${ref}" не объявлен в <definitions>`)
+        }
+      })
+
+      return warnings
+    }
+
+    const warnings = validateXmlBeforeDeploy(currentXml)
+    if (warnings.length > 0) {
+      const proceed = window.confirm(`Предупреждения перед деплоем:\n\n${warnings.join('\n')}\n\nПродолжить?`)
+      if (!proceed) {
+        return
+      }
+    }
+
     const confirmed = window.confirm('Задеплоить текущий Draft в Flowable?')
     if (!confirmed) {
       return
@@ -450,6 +605,17 @@ export function TemplatesPage() {
 
   const modelerRef = useRef<any | null>(null)
   const [selectedElement, setSelectedElement] = useState<any | null>(null)
+  const lastSelectedElementRef = useRef<any | null>(null)
+
+  const handleElementSelect = (el: any | null) => {
+    if (el) {
+      lastSelectedElementRef.current = el
+      setSelectedElement(el)
+      return
+    }
+
+    setSelectedElement(lastSelectedElementRef.current)
+  }
 
   const authUser = useAuthStore((s) => s.user)
   const companyId = authUser?.company_id ?? ''
@@ -461,9 +627,11 @@ export function TemplatesPage() {
 
   const availableRoles = (rolesQuery.data ?? []).map((r: any) => r.flowable_group)
 
+  const showPropertiesPanel = !editorReadonly && Boolean(selectedElement)
+
   return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-4">
+    <div className="flex h-full min-h-0 flex-col gap-4">
+      <div className="flex shrink-0 flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-semibold text-slate-950">Редактор шаблонов</h1>
           <p className="mt-2 text-sm text-slate-500">Загрузка, редактирование и деплой BPMN-шаблонов.</p>
@@ -561,6 +729,63 @@ export function TemplatesPage() {
                 <div className="mt-2 text-xs text-slate-500">Название шаблона в системе</div>
               </div>
 
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                <label className="flex cursor-pointer items-center gap-3">
+                  <input
+                    type="checkbox"
+                    checked={addMessageLink}
+                    onChange={(event) => setAddMessageLink(event.target.checked)}
+                    className="h-4 w-4 rounded"
+                  />
+                  <div>
+                    <div className="text-sm font-semibold text-slate-800">Связать с другим процессом через сообщение</div>
+                    <div className="text-xs text-slate-500">Создаст MessageEndEvent → MessageStartEvent между двумя процессами</div>
+                  </div>
+                </label>
+
+                {addMessageLink ? (
+                  <div className="mt-4 space-y-3 border-t border-slate-200 pt-4">
+                    <div>
+                      <label className="mb-1 block text-xs font-semibold text-slate-700">Имя сообщения (messageRef)</label>
+                      <input
+                        value={messageName}
+                        onChange={(event) => setMessageName(event.target.value)}
+                        placeholder="StartSecond"
+                        className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm"
+                      />
+                      <div className="mt-1 text-xs text-slate-400">
+                        В XML: <span className="font-mono">{`<message id="${messageName}" name="${messageName}"/>`}</span>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="mb-1 block text-xs font-semibold text-slate-700">ID второго процесса (получатель)</label>
+                      <input
+                        value={secondProcessId}
+                        onChange={(event) => setSecondProcessId(event.target.value)}
+                        placeholder="secondProcess"
+                        className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="mb-1 block text-xs font-semibold text-slate-700">Название второго процесса</label>
+                      <input
+                        value={secondProcessName}
+                        onChange={(event) => setSecondProcessName(event.target.value)}
+                        placeholder="Second Process"
+                        className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm"
+                      />
+                    </div>
+
+                    <div className="rounded-xl border border-blue-100 bg-blue-50 p-3 text-xs font-mono text-blue-800 space-y-1">
+                      <div>{`[${processName}] --${messageName}--> [${secondProcessName}]`}</div>
+                      <div className="text-blue-500">MessageEndEvent → MessageStartEvent</div>
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+
               <div className="flex items-center justify-end gap-3 pt-2">
                 <button
                   type="button"
@@ -583,26 +808,29 @@ export function TemplatesPage() {
         </div>
       ) : null}
 
-      <div className="grid gap-6 xl:grid-cols-[360px_minmax(0,1fr)_288px]">
-        <aside className="rounded-3xl border border-white/70 bg-white/85 p-4 shadow-xl shadow-slate-900/5 backdrop-blur">
-          <div className="mb-4 flex items-center justify-between">
+      <div className="flex min-h-0 flex-1 gap-6">
+        <aside className="flex w-80 shrink-0 flex-col overflow-hidden rounded-3xl border border-white/70 bg-white/85 shadow-xl shadow-slate-900/5 backdrop-blur">
+          <div className="shrink-0 p-4 pb-0">
+            <div className="mb-4 flex items-center justify-between">
             <div>
               <div className="text-xs uppercase tracking-[0.35em] text-slate-400">Templates</div>
               <div className="mt-1 text-lg font-semibold text-slate-950">Список шаблонов</div>
             </div>
             {templatesQuery.isFetching ? <div className="text-xs font-medium text-slate-400">Обновление...</div> : null}
+            </div>
           </div>
 
-          {templatesQuery.isLoading ? <div className="py-8 text-sm text-slate-500">Загрузка...</div> : null}
+          <div className="flex-1 overflow-y-auto p-4 pt-0">
+            {templatesQuery.isLoading ? <div className="py-8 text-sm text-slate-500">Загрузка...</div> : null}
 
-          {!templatesQuery.isLoading && templates.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-5 text-sm text-slate-500">
-              Пока нет шаблонов. Загрузите BPMN-файл, чтобы начать работу.
-            </div>
-          ) : null}
+            {!templatesQuery.isLoading && templates.length === 0 ? (
+              <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-5 text-sm text-slate-500">
+                Пока нет шаблонов. Загрузите BPMN-файл, чтобы начать работу.
+              </div>
+            ) : null}
 
-          <div className="space-y-3">
-            {templates.map((template) => {
+            <div className="space-y-3">
+              {templates.map((template) => {
               const isSelected = template.id === selectedTemplateId
               return (
                 <div key={template.id} className={["rounded-3xl border p-4 transition", isSelected ? 'border-blue-500 bg-blue-50 shadow-lg shadow-blue-100/60' : 'border-slate-200 bg-white hover:border-slate-300'].join(' ')}>
@@ -682,75 +910,78 @@ export function TemplatesPage() {
                   ) : null}
                 </div>
               )
-            })}
+              })}
+            </div>
           </div>
         </aside>
 
-        <section className="flex min-h-0 flex-col gap-4 rounded-3xl border border-white/70 bg-white/85 p-4 shadow-xl shadow-slate-900/5 backdrop-blur">
+        <section className="flex min-w-0 flex-1 flex-col gap-3 overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-xl shadow-slate-900/5">
           {!selectedTemplate ? (
             <div className="flex min-h-[calc(100vh-200px)] items-center justify-center rounded-3xl border border-dashed border-slate-200 bg-slate-50 px-6 text-center text-slate-500">
               Выберите шаблон для редактирования.
             </div>
           ) : (
             <>
-              <div className="flex flex-wrap items-start justify-between gap-4 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-                <div>
-                  <div className="text-xs uppercase tracking-[0.35em] text-slate-400">Editor</div>
-                  <h2 className="mt-2 text-2xl font-semibold text-slate-950">{selectedTemplate.name}</h2>
-                  <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-slate-500">
-                    <span>{selectedTemplate.process_definition_key}</span>
-                    <span>·</span>
-                    <span className={["rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.22em]", selectedVersion?.status === 'DEPLOYED' ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-amber-200 bg-amber-50 text-amber-700'].join(' ')}>
-                      {selectedVersion?.status ?? '—'}
-                    </span>
-                    {isDirty ? <span className="rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.22em] text-amber-700">Несохранённые изменения</span> : null}
-                  </div>
-                </div>
-
-                <div className="flex flex-wrap items-center gap-2">
-                  <div className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2">
-                    <span className="text-sm text-slate-500">Схема:</span>
-                    <select
-                      value={selectedTemplate.schema_id ?? ''}
-                      onChange={(event) => void linkSchemaMutation.mutateAsync(event.target.value || null)}
-                      className="rounded-xl border border-slate-200 px-3 py-2 text-sm"
-                      disabled={linkSchemaMutation.isPending || schemasQuery.isLoading}
-                    >
-                      <option value="">— без схемы —</option>
-                      {schemasQuery.data?.map((schema) => (
-                        <option key={schema.id} value={schema.id}>{schema.name}</option>
-                      ))}
-                    </select>
+              <div className="shrink-0 rounded-t-3xl border-b border-slate-200 bg-white p-4">
+                <div className="flex flex-wrap items-start justify-between gap-4">
+                  <div>
+                    <div className="text-xs uppercase tracking-[0.35em] text-slate-400">Editor</div>
+                    <h2 className="mt-2 text-2xl font-semibold text-slate-950">{selectedTemplate.name}</h2>
+                    <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-slate-500">
+                      <span>{selectedTemplate.process_definition_key}</span>
+                      <span>·</span>
+                      <span className={['rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.22em]', selectedVersion?.status === 'DEPLOYED' ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-amber-200 bg-amber-50 text-amber-700'].join(' ')}>
+                        {selectedVersion?.status ?? '—'}
+                      </span>
+                      {isDirty ? <span className="rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.22em] text-amber-700">Несохранённые изменения</span> : null}
+                    </div>
                   </div>
 
-                  <button
-                    type="button"
-                    onClick={handleSave}
-                    disabled={saveMutation.isPending || !currentXml.trim()}
-                    className="rounded-2xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    {saveMutation.isPending ? 'Сохранение...' : 'Сохранить'}
-                  </button>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <div className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2">
+                      <span className="text-sm text-slate-500">Схема:</span>
+                      <select
+                        value={selectedTemplate.schema_id ?? ''}
+                        onChange={(event) => void linkSchemaMutation.mutateAsync(event.target.value || null)}
+                        className="rounded-xl border border-slate-200 px-3 py-2 text-sm"
+                        disabled={linkSchemaMutation.isPending || schemasQuery.isLoading}
+                      >
+                        <option value="">— без схемы —</option>
+                        {schemasQuery.data?.map((schema) => (
+                          <option key={schema.id} value={schema.id}>{schema.name}</option>
+                        ))}
+                      </select>
+                    </div>
 
-                  {canDeployCurrentTemplate ? (
                     <button
                       type="button"
-                      onClick={handleDeploy}
-                      disabled={deployMutation.isPending}
-                      className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800 transition hover:border-emerald-300 hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-60"
+                      onClick={handleSave}
+                      disabled={saveMutation.isPending || !currentXml.trim()}
+                      className="rounded-2xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-60"
                     >
-                      {deployMutation.isPending ? 'Деплой...' : 'Задеплоить'}
+                      {saveMutation.isPending ? 'Сохранение...' : 'Сохранить'}
                     </button>
-                  ) : null}
 
-                  <button
-                    type="button"
-                    onClick={handleDownload}
-                    disabled={!currentXml.trim()}
-                    className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    Скачать XML
-                  </button>
+                    {canDeployCurrentTemplate ? (
+                      <button
+                        type="button"
+                        onClick={handleDeploy}
+                        disabled={deployMutation.isPending}
+                        className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800 transition hover:border-emerald-300 hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        {deployMutation.isPending ? 'Деплой...' : 'Задеплоить'}
+                      </button>
+                    ) : null}
+
+                    <button
+                      type="button"
+                      onClick={handleDownload}
+                      disabled={!currentXml.trim()}
+                      className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      Скачать XML
+                    </button>
+                  </div>
                 </div>
               </div>
 
@@ -760,7 +991,7 @@ export function TemplatesPage() {
                 </div>
               ) : null}
 
-              <div className="min-h-[calc(100vh-200px)] flex-1 overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+              <div className="relative min-h-0 flex-1">
                 {templateVersionsQuery.isLoading && versions.length === 0 ? (
                   <div className="flex h-full items-center justify-center text-sm text-slate-500">Загрузка редактора...</div>
                 ) : currentXml && currentXml.includes('bpmn') ? (
@@ -770,29 +1001,33 @@ export function TemplatesPage() {
                     onChange={handleEditorChange}
                     readonly={editorReadonly}
                     onModelerReady={(m) => { modelerRef.current = m }}
-                    onElementSelect={setSelectedElement}
+                    onElementSelect={handleElementSelect}
                   />
                 ) : (
                   <div className="flex h-full items-center justify-center text-sm text-slate-500">Загрузка диаграммы...</div>
                 )}
               </div>
-              {/* Properties panel column */}
-              {!editorReadonly && selectedElement ? (
-                <div className="w-full border-l border-slate-200 bg-white">
-                  <BpmnPropertiesPanel
-                    element={selectedElement}
-                    availableRoles={availableRoles}
-                    modeler={modelerRef.current}
-                    onXmlChange={(xml) => { handleEditorChange(xml) }}
-                      schema={schemaQuery.data ?? null}
-                  />
-                </div>
-              ) : (
-                <div className="w-full" />
-              )}
             </>
           )}
         </section>
+
+        {showPropertiesPanel ? (
+          <aside className="flex w-72 shrink-0 flex-col overflow-hidden rounded-3xl border border-white/70 bg-white/85 shadow-xl shadow-slate-900/5 backdrop-blur" style={{ position: 'relative', zIndex: 10 }}>
+            <div className="sticky top-0 border-b border-slate-100 bg-white/90 px-4 py-3 backdrop-blur">
+              <div className="text-xs font-semibold uppercase tracking-widest text-slate-400">Properties</div>
+            </div>
+            <div className="flex-1 overflow-y-auto">
+              <BpmnPropertiesPanel
+                element={selectedElement}
+                availableRoles={availableRoles}
+                modeler={modelerRef.current}
+                onXmlChange={handleEditorChange}
+                schema={schemaQuery.data ?? null}
+                availableProcessKeys={deployedTemplates}
+              />
+            </div>
+          </aside>
+        ) : null}
       </div>
     </div>
   )
