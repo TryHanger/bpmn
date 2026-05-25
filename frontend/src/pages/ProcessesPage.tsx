@@ -173,11 +173,12 @@ export function ProcessesPage() {
         </div>
       </div>
 
-      {selectedCompany ? <div className="text-sm text-slate-500">Компания: {selectedCompany.name}</div> : null}
-      {processesQuery.isLoading ? <div className="text-slate-500">Загрузка...</div> : null}
+      <div className="pr-4">
+        {selectedCompany ? <div className="text-sm text-slate-500">Компания: {selectedCompany.name}</div> : null}
+        {processesQuery.isLoading ? <div className="text-slate-500">Загрузка...</div> : null}
 
-      <div className="space-y-4">
-        {processesQuery.data?.items.map((process) => (
+        <div className="space-y-4">
+          {processesQuery.data?.items.map((process) => (
           <div key={process.id} className="rounded-3xl border border-slate-200 bg-white p-5 shadow-xl shadow-slate-900/5">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
@@ -202,6 +203,7 @@ export function ProcessesPage() {
             </div>
           </div>
         ))}
+        </div>
       </div>
 
       {isModalOpen ? (

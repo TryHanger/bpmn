@@ -1,277 +1,409 @@
-Пошаговый план реализации полноценной BPM-системы на Flowable
-
-Ниже — практический roadmap для создания универсальной workflow-платформы на базе:
-
-Flowable Open Source
-Flowable REST API Documentation
-bpmn.io (bpmn.js)
-FastAPI
-React
-Этап 1. Архитектурное понимание
-Цель
-
-Сначала нужно понять, кто за что отвечает.
-
-React + bpmn.js
-    ↓
-FastAPI (твой backend API)
-    ↓
-Flowable Engine
-    ↓
-Database
-Ответственность компонентов
-React + bpmn.js
-визуальный редактор BPMN
-интерфейс задач
-отображение статусов
-FastAPI
-единая API-точка для фронтенда
-интеграция с Flowable REST API
-бизнес-логика
-авторизация
-Flowable
-исполнение BPMN
-User Tasks
-Service Tasks
-Variables
-History
-PostgreSQL (или другая СУБД)
-хранение данных Flowable
-данные приложения
-Этап 2. Поднять инфраструктуру
-Что нужно развернуть
-Flowable REST App
-PostgreSQL
-FastAPI
-React
-Результат этапа
-
-Ты должен иметь работающий Flowable REST API и доступ к нему.
-
-Этап 3. Изучить REST API Flowable
-Разделы, которые обязательно освоить
-Repository API
-deployments
-process definitions
-Runtime API
-process instances
-executions
-variables
-Task API
-tasks
-claim
-complete
-History API
-completed processes and tasks
-Этап 4. Реализовать FastAPI-клиент для Flowable
-Создать слой FlowableClient
-
-Методы:
-
-deploy_process()
-list_process_definitions()
-start_process()
-get_tasks()
-claim_task()
-complete_task()
-get_process_status()
-get_history()
-Результат этапа
-
-Твой backend должен уметь полностью управлять Flowable.
-
-Этап 5. Реализовать минимальный workflow
-BPMN схема
-Start
-  ↓
-User Task
-  ↓
-Gateway
-   ↙     ↘
- Approved  Rejected
-   ↓         ↓
- End       End
-Что проверить
-Деплой процесса
-Запуск процесса
-Получение задачи
-Завершение задачи
-Проверка статуса процесса
-Этап 6. Реализовать API FastAPI
-Process API
-POST /process/deploy
-POST /process/start
-GET /process
-GET /process/{id}
-GET /process/{id}/status
-Task API
-GET /tasks
-POST /tasks/{id}/claim
-POST /tasks/{id}/complete
-Этап 7. Реализовать React Task Inbox
-Функциональность
-список задач пользователя
-фильтрация по роли
-просмотр переменных
-кнопки Approve / Reject
-Этап 8. Интегрировать bpmn.js
-Возможности редактора
-создание BPMN схем
-экспорт XML
-импорт XML
-деплой в Flowable
-Настроить moddle extension для Flowable
-
-Чтобы поддерживать:
-
-flowable:candidateGroup
-flowable:assignee
-flowable:delegateExpression
-flowable:type
-Этап 9. Реализовать универсальные свойства элементов
-User Task
-assignee
-candidate users
-candidate groups
-due date
-priority
-Service Task
-implementation type
-topic
-delegate expression
-Sequence Flow
-condition expression
-Этап 10. Реализовать Service Task Worker
-
-Для автоматических шагов.
-
-Варианты
-HTTP вызовы из backend
-Polling external tasks
-Custom integration logic
-Результат
-
-Service Tasks начинают выполнять бизнес-логику.
-
-Этап 11. Реализовать Process Variables
-Что поддержать
-ввод переменных при старте процесса
-просмотр переменных
-передача переменных при complete task
-отображение переменных в UI
-Этап 12. Реализовать статус процесса
-Для создателя процесса
-
-Отображать:
-
-текущий шаг
-активные задачи
-завершенные задачи
-финальный результат
-Этап 13. Реализовать историю
-
-Использовать History API для:
-
-аудита
-отображения таймлайна
-анализа
-Этап 14. Реализовать авторизацию и роли
-В системе должны быть:
-пользователи
-роли
-группы
-Использование
-frontend определяет текущую роль
-backend фильтрует задачи
-Flowable использует candidateGroup
-Этап 15. Поддержка версий процессов
-Возможности
-деплой новых версий
-запуск по ключу
-просмотр списка версий
-Этап 16. Реализовать конструктор форм (опционально)
-
-Для User Tasks можно хранить конфигурацию полей и динамически строить формы.
-
-Этап 17. Добавить бизнес-логические шаблоны
-
-Готовые шаблоны:
-
-approval workflow
-onboarding
-отпуск
-договоры
-Этап 18. Тестирование
-Что тестировать
-деплой BPMN
-запуск процесса
-user tasks
-gateways
-variables
-history
-Этап 19. Мониторинг и логирование
-логирование вызовов Flowable
-отслеживание ошибок
-метрики
-Этап 20. Продакшн-готовность
-Docker Compose / Kubernetes
-PostgreSQL backups
-миграции
-CI/CD
-Рекомендуемая структура проекта
-frontend/
-  src/
-    pages/
-    components/
-    bpm/
-
-backend/
-  app/
-    api/
-    services/
-    flowable/
-    models/
-    auth/
-
-infrastructure/
-  docker-compose.yml
-MVP (минимум для рабочего продукта)
-
-Чтобы получить первую рабочую версию, достаточно:
-
-Поднять Flowable
-Написать FlowableClient в FastAPI
-Создать простой approval BPMN
-Реализовать:
-deploy
-start
-list tasks
-complete task
-process status
-Сделать React Task Inbox
-Добавить bpmn.js editor
+{
+    "data": [
+        {
+            "id": "20aa51d4-550b-11f1-b224-d2ad2a8d8500",
+            "activityId": "Flow_1c9d59a",
+            "activityName": null,
+            "activityType": "sequenceFlow",
+            "processDefinitionId": "test:4:0b406bcf-5046-11f1-8908-268cfb1b1f1a",
+            "processDefinitionUrl": "http://localhost:8080/flowable-rest/service/repository/process-definitions/test:4:0b406bcf-5046-11f1-8908-268cfb1b1f1a",
+            "processInstanceId": "20aa51cc-550b-11f1-b224-d2ad2a8d8500",
+            "processInstanceUrl": "http://localhost:8080/flowable-rest/service/history/historic-process-instances/20aa51cc-550b-11f1-b224-d2ad2a8d8500",
+            "executionId": "20aa51d2-550b-11f1-b224-d2ad2a8d8500",
+            "taskId": null,
+            "calledProcessInstanceId": null,
+            "assignee": null,
+            "startTime": "2026-05-21T11:49:30.623Z",
+            "endTime": "2026-05-21T11:49:30.623Z",
+            "durationInMillis": 0,
+            "tenantId": ""
+        },
+        {
+            "id": "20aa51d5-550b-11f1-b224-d2ad2a8d8500",
+            "activityId": "Activity_1oq6gnr",
+            "activityName": null,
+            "activityType": "userTask",
+            "processDefinitionId": "test:4:0b406bcf-5046-11f1-8908-268cfb1b1f1a",
+            "processDefinitionUrl": "http://localhost:8080/flowable-rest/service/repository/process-definitions/test:4:0b406bcf-5046-11f1-8908-268cfb1b1f1a",
+            "processInstanceId": "20aa51cc-550b-11f1-b224-d2ad2a8d8500",
+            "processInstanceUrl": "http://localhost:8080/flowable-rest/service/history/historic-process-instances/20aa51cc-550b-11f1-b224-d2ad2a8d8500",
+            "executionId": "20aa51d2-550b-11f1-b224-d2ad2a8d8500",
+            "taskId": "20aa51d6-550b-11f1-b224-d2ad2a8d8500",
+            "calledProcessInstanceId": null,
+            "assignee": "d7c0a02a-90fe-4d06-99da-682c8e464d9b",
+            "startTime": "2026-05-21T11:49:30.623Z",
+            "endTime": "2026-05-21T11:49:50.988Z",
+            "durationInMillis": 20365,
+            "tenantId": ""
+        },
+        {
+            "id": "20aa51d3-550b-11f1-b224-d2ad2a8d8500",
+            "activityId": "startEvent1",
+            "activityName": "Start",
+            "activityType": "startEvent",
+            "processDefinitionId": "test:4:0b406bcf-5046-11f1-8908-268cfb1b1f1a",
+            "processDefinitionUrl": "http://localhost:8080/flowable-rest/service/repository/process-definitions/test:4:0b406bcf-5046-11f1-8908-268cfb1b1f1a",
+            "processInstanceId": "20aa51cc-550b-11f1-b224-d2ad2a8d8500",
+            "processInstanceUrl": "http://localhost:8080/flowable-rest/service/history/historic-process-instances/20aa51cc-550b-11f1-b224-d2ad2a8d8500",
+            "executionId": "20aa51d2-550b-11f1-b224-d2ad2a8d8500",
+            "taskId": null,
+            "calledProcessInstanceId": null,
+            "assignee": null,
+            "startTime": "2026-05-21T11:49:30.623Z",
+            "endTime": "2026-05-21T11:49:30.623Z",
+            "durationInMillis": 0,
+            "tenantId": ""
+        },
+        {
+            "id": "2ccdecc2-550b-11f1-b224-d2ad2a8d8500",
+            "activityId": "Activity_1t1ll0t",
+            "activityName": null,
+            "activityType": "userTask",
+            "processDefinitionId": "test:4:0b406bcf-5046-11f1-8908-268cfb1b1f1a",
+            "processDefinitionUrl": "http://localhost:8080/flowable-rest/service/repository/process-definitions/test:4:0b406bcf-5046-11f1-8908-268cfb1b1f1a",
+            "processInstanceId": "20aa51cc-550b-11f1-b224-d2ad2a8d8500",
+            "processInstanceUrl": "http://localhost:8080/flowable-rest/service/history/historic-process-instances/20aa51cc-550b-11f1-b224-d2ad2a8d8500",
+            "executionId": "20aa51d2-550b-11f1-b224-d2ad2a8d8500",
+            "taskId": "2ccdecc3-550b-11f1-b224-d2ad2a8d8500",
+            "calledProcessInstanceId": null,
+            "assignee": "67893703-36ac-4093-a7ea-f970721ed5a3",
+            "startTime": "2026-05-21T11:49:50.989Z",
+            "endTime": "2026-05-21T11:50:23.295Z",
+            "durationInMillis": 32306,
+            "tenantId": ""
+        },
+        {
+            "id": "2ccdecc1-550b-11f1-b224-d2ad2a8d8500",
+            "activityId": "Flow_154sr8k",
+            "activityName": null,
+            "activityType": "sequenceFlow",
+            "processDefinitionId": "test:4:0b406bcf-5046-11f1-8908-268cfb1b1f1a",
+            "processDefinitionUrl": "http://localhost:8080/flowable-rest/service/repository/process-definitions/test:4:0b406bcf-5046-11f1-8908-268cfb1b1f1a",
+            "processInstanceId": "20aa51cc-550b-11f1-b224-d2ad2a8d8500",
+            "processInstanceUrl": "http://localhost:8080/flowable-rest/service/history/historic-process-instances/20aa51cc-550b-11f1-b224-d2ad2a8d8500",
+            "executionId": "20aa51d2-550b-11f1-b224-d2ad2a8d8500",
+            "taskId": null,
+            "calledProcessInstanceId": null,
+            "assignee": null,
+            "startTime": "2026-05-21T11:49:50.989Z",
+            "endTime": "2026-05-21T11:49:50.989Z",
+            "durationInMillis": 0,
+            "tenantId": ""
+        },
+        {
+            "id": "400f9426-550b-11f1-b224-d2ad2a8d8500",
+            "activityId": "Flow_1hsdvu3",
+            "activityName": null,
+            "activityType": "sequenceFlow",
+            "processDefinitionId": "test:4:0b406bcf-5046-11f1-8908-268cfb1b1f1a",
+            "processDefinitionUrl": "http://localhost:8080/flowable-rest/service/repository/process-definitions/test:4:0b406bcf-5046-11f1-8908-268cfb1b1f1a",
+            "processInstanceId": "20aa51cc-550b-11f1-b224-d2ad2a8d8500",
+            "processInstanceUrl": "http://localhost:8080/flowable-rest/service/history/historic-process-instances/20aa51cc-550b-11f1-b224-d2ad2a8d8500",
+            "executionId": "20aa51d2-550b-11f1-b224-d2ad2a8d8500",
+            "taskId": null,
+            "calledProcessInstanceId": null,
+            "assignee": null,
+            "startTime": "2026-05-21T11:50:23.296Z",
+            "endTime": "2026-05-21T11:50:23.296Z",
+            "durationInMillis": 0,
+            "tenantId": ""
+        },
+        {
+            "id": "400f9427-550b-11f1-b224-d2ad2a8d8500",
+            "activityId": "Activity_0o4cbfr",
+            "activityName": null,
+            "activityType": "userTask",
+            "processDefinitionId": "test:4:0b406bcf-5046-11f1-8908-268cfb1b1f1a",
+            "processDefinitionUrl": "http://localhost:8080/flowable-rest/service/repository/process-definitions/test:4:0b406bcf-5046-11f1-8908-268cfb1b1f1a",
+            "processInstanceId": "20aa51cc-550b-11f1-b224-d2ad2a8d8500",
+            "processInstanceUrl": "http://localhost:8080/flowable-rest/service/history/historic-process-instances/20aa51cc-550b-11f1-b224-d2ad2a8d8500",
+            "executionId": "20aa51d2-550b-11f1-b224-d2ad2a8d8500",
+            "taskId": "400fbb38-550b-11f1-b224-d2ad2a8d8500",
+            "calledProcessInstanceId": null,
+            "assignee": "cbfe7e34-4fe0-4334-aaed-2013577baa95",
+            "startTime": "2026-05-21T11:50:23.296Z",
+            "endTime": "2026-05-21T11:51:09.817Z",
+            "durationInMillis": 46521,
+            "tenantId": ""
+        },
+        {
+            "id": "5bca45d1-550b-11f1-b224-d2ad2a8d8500",
+            "activityId": "Flow_07wmjfq",
+            "activityName": null,
+            "activityType": "sequenceFlow",
+            "processDefinitionId": "test:4:0b406bcf-5046-11f1-8908-268cfb1b1f1a",
+            "processDefinitionUrl": "http://localhost:8080/flowable-rest/service/repository/process-definitions/test:4:0b406bcf-5046-11f1-8908-268cfb1b1f1a",
+            "processInstanceId": "20aa51cc-550b-11f1-b224-d2ad2a8d8500",
+            "processInstanceUrl": "http://localhost:8080/flowable-rest/service/history/historic-process-instances/20aa51cc-550b-11f1-b224-d2ad2a8d8500",
+            "executionId": "20aa51d2-550b-11f1-b224-d2ad2a8d8500",
+            "taskId": null,
+            "calledProcessInstanceId": null,
+            "assignee": null,
+            "startTime": "2026-05-21T11:51:09.818Z",
+            "endTime": "2026-05-21T11:51:09.818Z",
+            "durationInMillis": 0,
+            "tenantId": ""
+        },
+        {
+            "id": "5bca45d2-550b-11f1-b224-d2ad2a8d8500",
+            "activityId": "Gateway_17oq2v6",
+            "activityName": null,
+            "activityType": "exclusiveGateway",
+            "processDefinitionId": "test:4:0b406bcf-5046-11f1-8908-268cfb1b1f1a",
+            "processDefinitionUrl": "http://localhost:8080/flowable-rest/service/repository/process-definitions/test:4:0b406bcf-5046-11f1-8908-268cfb1b1f1a",
+            "processInstanceId": "20aa51cc-550b-11f1-b224-d2ad2a8d8500",
+            "processInstanceUrl": "http://localhost:8080/flowable-rest/service/history/historic-process-instances/20aa51cc-550b-11f1-b224-d2ad2a8d8500",
+            "executionId": "20aa51d2-550b-11f1-b224-d2ad2a8d8500",
+            "taskId": null,
+            "calledProcessInstanceId": null,
+            "assignee": null,
+            "startTime": "2026-05-21T11:51:09.818Z",
+            "endTime": "2026-05-21T11:51:09.821Z",
+            "durationInMillis": 3,
+            "tenantId": ""
+        },
+        {
+            "id": "5bcabb03-550b-11f1-b224-d2ad2a8d8500",
+            "activityId": "Flow_1lpvrq6",
+            "activityName": null,
+            "activityType": "sequenceFlow",
+            "processDefinitionId": "test:4:0b406bcf-5046-11f1-8908-268cfb1b1f1a",
+            "processDefinitionUrl": "http://localhost:8080/flowable-rest/service/repository/process-definitions/test:4:0b406bcf-5046-11f1-8908-268cfb1b1f1a",
+            "processInstanceId": "20aa51cc-550b-11f1-b224-d2ad2a8d8500",
+            "processInstanceUrl": "http://localhost:8080/flowable-rest/service/history/historic-process-instances/20aa51cc-550b-11f1-b224-d2ad2a8d8500",
+            "executionId": "20aa51d2-550b-11f1-b224-d2ad2a8d8500",
+            "taskId": null,
+            "calledProcessInstanceId": null,
+            "assignee": null,
+            "startTime": "2026-05-21T11:51:09.821Z",
+            "endTime": "2026-05-21T11:51:09.821Z",
+            "durationInMillis": 0,
+            "tenantId": ""
+        },
+        {
+            "id": "5bcabb04-550b-11f1-b224-d2ad2a8d8500",
+            "activityId": "Activity_1t1ll0t",
+            "activityName": null,
+            "activityType": "userTask",
+            "processDefinitionId": "test:4:0b406bcf-5046-11f1-8908-268cfb1b1f1a",
+            "processDefinitionUrl": "http://localhost:8080/flowable-rest/service/repository/process-definitions/test:4:0b406bcf-5046-11f1-8908-268cfb1b1f1a",
+            "processInstanceId": "20aa51cc-550b-11f1-b224-d2ad2a8d8500",
+            "processInstanceUrl": "http://localhost:8080/flowable-rest/service/history/historic-process-instances/20aa51cc-550b-11f1-b224-d2ad2a8d8500",
+            "executionId": "20aa51d2-550b-11f1-b224-d2ad2a8d8500",
+            "taskId": "5bcabb05-550b-11f1-b224-d2ad2a8d8500",
+            "calledProcessInstanceId": null,
+            "assignee": "67893703-36ac-4093-a7ea-f970721ed5a3",
+            "startTime": "2026-05-21T11:51:09.821Z",
+            "endTime": "2026-05-21T11:51:18.947Z",
+            "durationInMillis": 9126,
+            "tenantId": ""
+        },
+        {
+            "id": "613b3f6c-550b-11f1-b224-d2ad2a8d8500",
+            "activityId": "Activity_0o4cbfr",
+            "activityName": null,
+            "activityType": "userTask",
+            "processDefinitionId": "test:4:0b406bcf-5046-11f1-8908-268cfb1b1f1a",
+            "processDefinitionUrl": "http://localhost:8080/flowable-rest/service/repository/process-definitions/test:4:0b406bcf-5046-11f1-8908-268cfb1b1f1a",
+            "processInstanceId": "20aa51cc-550b-11f1-b224-d2ad2a8d8500",
+            "processInstanceUrl": "http://localhost:8080/flowable-rest/service/history/historic-process-instances/20aa51cc-550b-11f1-b224-d2ad2a8d8500",
+            "executionId": "20aa51d2-550b-11f1-b224-d2ad2a8d8500",
+            "taskId": "613b3f6d-550b-11f1-b224-d2ad2a8d8500",
+            "calledProcessInstanceId": null,
+            "assignee": "cbfe7e34-4fe0-4334-aaed-2013577baa95",
+            "startTime": "2026-05-21T11:51:18.947Z",
+            "endTime": "2026-05-21T11:51:30.429Z",
+            "durationInMillis": 11482,
+            "tenantId": ""
+        },
+        {
+            "id": "613b3f6b-550b-11f1-b224-d2ad2a8d8500",
+            "activityId": "Flow_1hsdvu3",
+            "activityName": null,
+            "activityType": "sequenceFlow",
+            "processDefinitionId": "test:4:0b406bcf-5046-11f1-8908-268cfb1b1f1a",
+            "processDefinitionUrl": "http://localhost:8080/flowable-rest/service/repository/process-definitions/test:4:0b406bcf-5046-11f1-8908-268cfb1b1f1a",
+            "processInstanceId": "20aa51cc-550b-11f1-b224-d2ad2a8d8500",
+            "processInstanceUrl": "http://localhost:8080/flowable-rest/service/history/historic-process-instances/20aa51cc-550b-11f1-b224-d2ad2a8d8500",
+            "executionId": "20aa51d2-550b-11f1-b224-d2ad2a8d8500",
+            "taskId": null,
+            "calledProcessInstanceId": null,
+            "assignee": null,
+            "startTime": "2026-05-21T11:51:18.947Z",
+            "endTime": "2026-05-21T11:51:18.947Z",
+            "durationInMillis": 0,
+            "tenantId": ""
+        },
+        {
+            "id": "68136a25-550b-11f1-b224-d2ad2a8d8500",
+            "activityId": "Flow_12940rd",
+            "activityName": null,
+            "activityType": "sequenceFlow",
+            "processDefinitionId": "test:4:0b406bcf-5046-11f1-8908-268cfb1b1f1a",
+            "processDefinitionUrl": "http://localhost:8080/flowable-rest/service/repository/process-definitions/test:4:0b406bcf-5046-11f1-8908-268cfb1b1f1a",
+            "processInstanceId": "20aa51cc-550b-11f1-b224-d2ad2a8d8500",
+            "processInstanceUrl": "http://localhost:8080/flowable-rest/service/history/historic-process-instances/20aa51cc-550b-11f1-b224-d2ad2a8d8500",
+            "executionId": "20aa51d2-550b-11f1-b224-d2ad2a8d8500",
+            "taskId": null,
+            "calledProcessInstanceId": null,
+            "assignee": null,
+            "startTime": "2026-05-21T11:51:30.430Z",
+            "endTime": "2026-05-21T11:51:30.430Z",
+            "durationInMillis": 0,
+            "tenantId": ""
+        },
+        {
+            "id": "68136a23-550b-11f1-b224-d2ad2a8d8500",
+            "activityId": "Flow_07wmjfq",
+            "activityName": null,
+            "activityType": "sequenceFlow",
+            "processDefinitionId": "test:4:0b406bcf-5046-11f1-8908-268cfb1b1f1a",
+            "processDefinitionUrl": "http://localhost:8080/flowable-rest/service/repository/process-definitions/test:4:0b406bcf-5046-11f1-8908-268cfb1b1f1a",
+            "processInstanceId": "20aa51cc-550b-11f1-b224-d2ad2a8d8500",
+            "processInstanceUrl": "http://localhost:8080/flowable-rest/service/history/historic-process-instances/20aa51cc-550b-11f1-b224-d2ad2a8d8500",
+            "executionId": "20aa51d2-550b-11f1-b224-d2ad2a8d8500",
+            "taskId": null,
+            "calledProcessInstanceId": null,
+            "assignee": null,
+            "startTime": "2026-05-21T11:51:30.430Z",
+            "endTime": "2026-05-21T11:51:30.430Z",
+            "durationInMillis": 0,
+            "tenantId": ""
+        },
+        {
+            "id": "68136a24-550b-11f1-b224-d2ad2a8d8500",
+            "activityId": "Gateway_17oq2v6",
+            "activityName": null,
+            "activityType": "exclusiveGateway",
+            "processDefinitionId": "test:4:0b406bcf-5046-11f1-8908-268cfb1b1f1a",
+            "processDefinitionUrl": "http://localhost:8080/flowable-rest/service/repository/process-definitions/test:4:0b406bcf-5046-11f1-8908-268cfb1b1f1a",
+            "processInstanceId": "20aa51cc-550b-11f1-b224-d2ad2a8d8500",
+            "processInstanceUrl": "http://localhost:8080/flowable-rest/service/history/historic-process-instances/20aa51cc-550b-11f1-b224-d2ad2a8d8500",
+            "executionId": "20aa51d2-550b-11f1-b224-d2ad2a8d8500",
+            "taskId": null,
+            "calledProcessInstanceId": null,
+            "assignee": null,
+            "startTime": "2026-05-21T11:51:30.430Z",
+            "endTime": "2026-05-21T11:51:30.430Z",
+            "durationInMillis": 0,
+            "tenantId": ""
+        },
+        {
+            "id": "68136a26-550b-11f1-b224-d2ad2a8d8500",
+            "activityId": "Event_0ofkwoe",
+            "activityName": null,
+            "activityType": "endEvent",
+            "processDefinitionId": "test:4:0b406bcf-5046-11f1-8908-268cfb1b1f1a",
+            "processDefinitionUrl": "http://localhost:8080/flowable-rest/service/repository/process-definitions/test:4:0b406bcf-5046-11f1-8908-268cfb1b1f1a",
+            "processInstanceId": "20aa51cc-550b-11f1-b224-d2ad2a8d8500",
+            "processInstanceUrl": "http://localhost:8080/flowable-rest/service/history/historic-process-instances/20aa51cc-550b-11f1-b224-d2ad2a8d8500",
+            "executionId": "20aa51d2-550b-11f1-b224-d2ad2a8d8500",
+            "taskId": null,
+            "calledProcessInstanceId": null,
+            "assignee": null,
+            "startTime": "2026-05-21T11:51:30.430Z",
+            "endTime": "2026-05-21T11:51:30.430Z",
+            "durationInMillis": 0,
+            "tenantId": ""
+        }
+    ],
+    "total": 17,
+    "start": 0,
+    "sort": "startTime",
+    "order": "asc",
+    "size": 17
+}
 
 
 <?xml version="1.0" encoding="UTF-8"?>
-<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
-             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-             xmlns:flowable="http://flowable.org/bpmn"
-             targetNamespace="Examples">
-
-  <process id="simpleApprovalTest" name="Simple Approval Test" isExecutable="true">
-
-    <startEvent id="start" />
-
-    <sequenceFlow id="flow1" sourceRef="start" targetRef="approveTask" />
-
-    <userTask id="approveTask"
-          flowable:assignee="testUser"/>
-
-    <sequenceFlow id="flow2" sourceRef="approveTask" targetRef="end" />
-
-    <endEvent id="end" />
-
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC" xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI" xmlns:flowable="http://flowable.org/bpmn" xmlns:activiti="http://activiti.org/bpmn" targetNamespace="http://www.activiti.org/test">
+  <process id="test" name="Test" isExecutable="true">
+    <startEvent id="startEvent1" name="Start">
+      <outgoing>Flow_1c9d59a</outgoing>
+    </startEvent>
+    <sequenceFlow id="Flow_1c9d59a" sourceRef="startEvent1" targetRef="Activity_1oq6gnr" />
+    <userTask id="Activity_1oq6gnr" flowable:assignee="hr">
+      <incoming>Flow_1c9d59a</incoming>
+      <outgoing>Flow_154sr8k</outgoing>
+    </userTask>
+    <sequenceFlow id="Flow_154sr8k" sourceRef="Activity_1oq6gnr" targetRef="Activity_1t1ll0t" />
+    <userTask id="Activity_1t1ll0t" flowable:assignee="manager">
+      <incoming>Flow_154sr8k</incoming>
+      <incoming>Flow_1lpvrq6</incoming>
+      <outgoing>Flow_1hsdvu3</outgoing>
+    </userTask>
+    <userTask id="Activity_0o4cbfr" flowable:assignee="ceo">
+      <incoming>Flow_1hsdvu3</incoming>
+      <outgoing>Flow_07wmjfq</outgoing>
+    </userTask>
+    <exclusiveGateway id="Gateway_17oq2v6">
+      <incoming>Flow_07wmjfq</incoming>
+      <outgoing>Flow_12940rd</outgoing>
+      <outgoing>Flow_1lpvrq6</outgoing>
+    </exclusiveGateway>
+    <sequenceFlow id="Flow_07wmjfq" sourceRef="Activity_0o4cbfr" targetRef="Gateway_17oq2v6" />
+    <endEvent id="Event_0ofkwoe">
+      <incoming>Flow_12940rd</incoming>
+    </endEvent>
+    <sequenceFlow id="Flow_12940rd" sourceRef="Gateway_17oq2v6" targetRef="Event_0ofkwoe">
+      <conditionExpression xsi:type="tFormalExpression">${ceoApproved == true}</conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="Flow_1lpvrq6" sourceRef="Gateway_17oq2v6" targetRef="Activity_1t1ll0t">
+      <conditionExpression xsi:type="tFormalExpression">${ceoApproved == false}</conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="Flow_1hsdvu3" sourceRef="Activity_1t1ll0t" targetRef="Activity_0o4cbfr" />
   </process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_test">
+    <bpmndi:BPMNPlane id="BPMNPlane_test" bpmnElement="test">
+      <bpmndi:BPMNShape id="startEvent1_di" bpmnElement="startEvent1">
+        <omgdc:Bounds x="152" y="82" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <omgdc:Bounds x="155" y="125" width="30" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1opz2kg_di" bpmnElement="Activity_1oq6gnr">
+        <omgdc:Bounds x="240" y="60" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0rfdx1z_di" bpmnElement="Activity_1t1ll0t">
+        <omgdc:Bounds x="400" y="60" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0lf35w9_di" bpmnElement="Activity_0o4cbfr">
+        <omgdc:Bounds x="700" y="170" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_17oq2v6_di" bpmnElement="Gateway_17oq2v6" isMarkerVisible="true">
+        <omgdc:Bounds x="725" y="75" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0ofkwoe_di" bpmnElement="Event_0ofkwoe">
+        <omgdc:Bounds x="842" y="82" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_1c9d59a_di" bpmnElement="Flow_1c9d59a">
+        <omgdi:waypoint x="188" y="100" />
+        <omgdi:waypoint x="240" y="100" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_154sr8k_di" bpmnElement="Flow_154sr8k">
+        <omgdi:waypoint x="340" y="100" />
+        <omgdi:waypoint x="400" y="100" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_07wmjfq_di" bpmnElement="Flow_07wmjfq">
+        <omgdi:waypoint x="750" y="170" />
+        <omgdi:waypoint x="750" y="125" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_12940rd_di" bpmnElement="Flow_12940rd">
+        <omgdi:waypoint x="775" y="100" />
+        <omgdi:waypoint x="842" y="100" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1lpvrq6_di" bpmnElement="Flow_1lpvrq6">
+        <omgdi:waypoint x="750" y="75" />
+        <omgdi:waypoint x="750" y="-20" />
+        <omgdi:waypoint x="450" y="-20" />
+        <omgdi:waypoint x="450" y="60" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1hsdvu3_di" bpmnElement="Flow_1hsdvu3">
+        <omgdi:waypoint x="500" y="100" />
+        <omgdi:waypoint x="600" y="100" />
+        <omgdi:waypoint x="600" y="210" />
+        <omgdi:waypoint x="700" y="210" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
 </definitions>
-
-

@@ -38,7 +38,7 @@ export function ActivityTimeline({ activities }: ActivityTimelineProps) {
           <div key={activity.activityId} className={`rounded-2xl border p-4 ${colors[activity.status]}`}>
             <div className="flex items-start justify-between gap-3">
               <div>
-                <div className="text-sm font-semibold text-slate-900">{activity.name || activity.activityId}</div>
+                <div className="text-sm font-semibold text-slate-900">{activity.activityName || activity.activityId}</div>
                 <div className="mt-1 text-xs uppercase tracking-[0.25em]">{labels[activity.status]}</div>
               </div>
               <div className="text-xs text-slate-500">{activity.assignee ?? '—'}</div>

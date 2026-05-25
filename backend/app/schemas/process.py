@@ -72,19 +72,37 @@ class TaskCompleteRequest(BaseModel):
 
 class ActivityStatus(BaseModel):
     activityId: str
-    name: str | None = None
+    activityName: str | None = None
+    activityType: str
     status: Literal["pending", "active", "completed", "rejected", "skipped", "interrupted"]
     assignee: str | None = None
-    bpmn_assignee: str | None = None
     startTime: datetime | None = None
     endTime: datetime | None = None
-    deleteReason: str | None = None
+    durationInMillis: int | None = None
+    calledProcessInstanceId: str | None = None
+
+
+class ProcessVariable(BaseModel):
+    name: str
+    type: str
+    value: object
+
+
+class ChildInstance(BaseModel):
+    activityId: str
+    processInstanceId: str
+    status: Literal["running", "completed", "terminated"]
+    processDefinitionName: str | None = None
+    startTime: datetime | None = None
+    endTime: datetime | None = None
 
 
 class ProcessStateResponse(BaseModel):
     process_instance_id: str
-    flowable_instance_id: str
+    status: Literal["running", "completed", "terminated"]
     activities: list[ActivityStatus]
+    variables: list[ProcessVariable] = Field(default_factory=list)
+    child_instances: list[ChildInstance] = Field(default_factory=list)
 
 
 class TaskContextResponse(BaseModel):

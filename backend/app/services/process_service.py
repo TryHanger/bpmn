@@ -18,10 +18,12 @@ from app.models.template import Template
 from app.models.user import User
 from app.models.user_types import ProcessInstanceStatus
 from app.schemas.process import (
+    ChildInstance,
     ActivityStatus,
     ProcessInstanceResponse,
     ProcessListResponse,
     ProcessStartRequest,
+    ProcessVariable,
     ProcessStateResponse,
 )
 from app.services.flowable import FlowableClient
@@ -178,103 +180,163 @@ class ProcessService:
 
         xml_template = await self._resolve_process_xml(process_instance)
         try:
-            executions_data, history_data = await asyncio.gather(
+            historic_activities_data, executions_data, history_variables_data, historic_process_data = await asyncio.gather(
+                self.flowable.list_historic_activity_instances(process_instance.flowable_process_instance_id),
                 self.flowable.list_runtime_executions(process_instance.flowable_process_instance_id),
-                self.flowable.list_historic_task_instances(process_instance.flowable_process_instance_id),
+                self.flowable.list_historic_variable_instances(process_instance.flowable_process_instance_id),
+                self.flowable.get_historic_process_instance(process_instance.flowable_process_instance_id),
             )
         except Exception as exc:
             logger.error("Flowable service error: %s", exc)
             raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Flowable service unavailable") from exc
 
-        active_ids = {item["activityId"] for item in executions_data.get("data", []) if item.get("activityId")}
-        process_is_finished = len(active_ids) == 0
-        history_by_key = {item["taskDefinitionKey"]: item for item in history_data.get("data", []) if item.get("taskDefinitionKey")}
-
         try:
-            root = ET.fromstring(xml_template)
+            graph = build_flow_graph(xml_template)
         except ET.ParseError as exc:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid BPMN XML") from exc
-        ns = {
-            "bpmn": "http://www.omg.org/spec/BPMN/20100524/MODEL",
-            "flowable": "http://flowable.org/bpmn",
-        }
-        all_tasks: list[dict[str, str | None]] = []
-        for task_elem in root.findall("bpmn:process/bpmn:userTask", ns):
-            all_tasks.append(
-                {
-                    "activityId": task_elem.get("id"),
-                    "name": task_elem.get("name") or "",
-                    "bpmn_assignee": task_elem.get("{http://flowable.org/bpmn}assignee"),
-                }
-            )
+        active_ids = {item["activityId"] for item in executions_data.get("data", []) if item.get("activityId")}
 
-        activities: list[ActivityStatus] = []
-        for task in all_tasks:
-            task_key = task["activityId"] or ""
-            if task_key in history_by_key:
-                hist = history_by_key[task_key]
-                end_time = hist.get("endTime")
-                delete_reason = hist.get("deleteReason")
-                status_value = "completed" if end_time and not delete_reason else "rejected" if end_time and delete_reason else "active"
-                activities.append(
-                    ActivityStatus(
-                        activityId=task_key,
-                        name=task["name"],
-                        status=status_value,
-                        assignee=hist.get("assignee"),
-                        bpmn_assignee=task["bpmn_assignee"],
-                        startTime=self._parse_datetime_optional(hist.get("startTime")),
-                        endTime=self._parse_datetime_optional(end_time),
-                        deleteReason=delete_reason,
-                    )
-                )
-            elif task_key in active_ids:
-                activities.append(
-                    ActivityStatus(
-                        activityId=task_key,
-                        name=task["name"],
-                        status="active",
-                        assignee=None,
-                        bpmn_assignee=task["bpmn_assignee"],
-                    )
-                )
+        historic_activities = [item for item in historic_activities_data.get("data", []) if item.get("activityId")]
+        assignee_ids = {str(item.get("assignee")) for item in historic_activities if item.get("assignee")}
+        assignee_map = await self._resolve_assignee_names(assignee_ids)
+
+        activities_by_id: dict[str, dict[str, object]] = {}
+        for activity_id, element in graph["elements"].items():
+            activity_type = element.get("type", "")
+            if activity_type == "sequenceFlow":
+                continue
+            activities_by_id[activity_id] = {
+                "activityId": activity_id,
+                "activityName": element.get("name") or None,
+                "activityType": activity_type,
+                "status": "active" if activity_id in active_ids else "pending",
+                "assignee": None,
+                "startTime": None,
+                "endTime": None,
+                "durationInMillis": None,
+                "calledProcessInstanceId": None,
+            }
+
+        for item in historic_activities:
+            activity_id = item.get("activityId")
+            if not activity_id:
+                continue
+            if item.get("activityType") == "sequenceFlow":
+                continue
+            activity_type = str(item.get("activityType") or activities_by_id.get(activity_id, {}).get("activityType") or "")
+            end_time = item.get("endTime")
+            delete_reason = item.get("deleteReason")
+            if delete_reason and end_time:
+                status_value = "rejected"
+            elif end_time:
+                status_value = "completed"
+            elif end_time is None:
+                status_value = "active"
             else:
-                activities.append(
-                    ActivityStatus(
-                        activityId=task_key,
-                        name=task["name"],
-                        status="pending",
-                        assignee=None,
-                        bpmn_assignee=task["bpmn_assignee"],
-                    )
+                status_value = "pending"
+
+            if activity_id not in activities_by_id:
+                activities_by_id[activity_id] = {
+                    "activityId": activity_id,
+                    "activityName": item.get("activityName") or None,
+                    "activityType": activity_type,
+                    "status": status_value,
+                    "assignee": None,
+                    "startTime": self._parse_datetime_optional(item.get("startTime")),
+                    "endTime": self._parse_datetime_optional(end_time),
+                    "durationInMillis": item.get("durationInMillis"),
+                    "calledProcessInstanceId": item.get("calledProcessInstanceId"),
+                }
+            else:
+                activities_by_id[activity_id].update(
+                    {
+                        "activityName": item.get("activityName") or activities_by_id[activity_id]["activityName"],
+                        "activityType": activity_type or activities_by_id[activity_id]["activityType"],
+                        "status": status_value,
+                        "assignee": assignee_map.get(str(item.get("assignee"))),
+                        "startTime": self._parse_datetime_optional(item.get("startTime")),
+                        "endTime": self._parse_datetime_optional(end_time),
+                        "durationInMillis": item.get("durationInMillis"),
+                        "calledProcessInstanceId": item.get("calledProcessInstanceId"),
+                    }
                 )
 
-        completed_ids = {key for key, item in history_by_key.items() if item.get("endTime") is not None and item.get("deleteReason") is None}
-        rejected_ids = {key for key, item in history_by_key.items() if item.get("endTime") is not None and item.get("deleteReason") is not None}
+        completed_ids = {activity_id for activity_id, item in activities_by_id.items() if item["status"] == "completed"}
+        rejected_ids = {activity_id for activity_id, item in activities_by_id.items() if item["status"] == "rejected"}
+        process_is_finished = historic_process_data.get("endTime") is not None
+
         if process_is_finished:
-            try:
-                historic_process = await self.flowable.get_historic_process_instance(process_instance.flowable_process_instance_id)
-                end_event_id = historic_process.get("endActivityId")
-                if end_event_id:
-                    completed_ids.add(end_event_id)
-            except Exception:
-                logger.debug("Could not fetch endActivityId for finished process")
+            end_event_id = historic_process_data.get("endActivityId")
+            if end_event_id:
+                completed_ids.add(end_event_id)
 
         skipped = find_skipped_tasks(
-            graph=build_flow_graph(xml_template),
+            graph=graph,
             active_ids=active_ids,
             completed_ids=completed_ids,
             rejected_ids=rejected_ids,
             process_is_finished=process_is_finished,
         )
-        for activity in activities:
-            if activity.status == "pending" and activity.activityId in skipped:
-                activity.status = "skipped"
+        for activity_id in skipped:
+            if activity_id in activities_by_id and activities_by_id[activity_id]["status"] == "pending":
+                activities_by_id[activity_id]["status"] = "skipped"
+
+        variables_by_name: dict[str, ProcessVariable] = {}
+        for item in history_variables_data.get("data", []):
+            variable = item.get("variable") or {}
+            variable_name = variable.get("name")
+            if not variable_name:
+                continue
+            variables_by_name[str(variable_name)] = ProcessVariable(
+                name=str(variable_name),
+                type=str(variable.get("type") or "string"),
+                value=variable.get("value"),
+            )
+
+        child_instance_ids: list[str] = []
+        child_sources: dict[str, str] = {}
+        for item in historic_activities:
+            if item.get("activityType") != "callActivity":
+                continue
+            child_process_instance_id = item.get("calledProcessInstanceId")
+            activity_id = item.get("activityId")
+            if not child_process_instance_id or not activity_id:
+                continue
+            child_process_instance_id = str(child_process_instance_id)
+            if child_process_instance_id not in child_sources:
+                child_instance_ids.append(child_process_instance_id)
+            child_sources[child_process_instance_id] = str(activity_id)
+
+        child_instances: list[ChildInstance] = []
+        if child_instance_ids:
+            child_results = await asyncio.gather(
+                *(self.flowable.get_historic_process_instance(child_id) for child_id in child_instance_ids),
+                return_exceptions=True,
+            )
+            for child_id, child_result in zip(child_instance_ids, child_results):
+                if isinstance(child_result, Exception):
+                    logger.debug("Failed to load child process history %s: %s", child_id, child_result)
+                    continue
+                child_end_time = child_result.get("endTime")
+                child_delete_reason = child_result.get("deleteReason")
+                child_status = "running" if child_end_time is None else "terminated" if child_delete_reason else "completed"
+                child_instances.append(
+                    ChildInstance(
+                        activityId=child_sources.get(child_id, ""),
+                        processInstanceId=child_id,
+                        status=child_status,
+                        processDefinitionName=child_result.get("processDefinitionName"),
+                        startTime=self._parse_datetime_optional(child_result.get("startTime")),
+                        endTime=self._parse_datetime_optional(child_end_time),
+                    )
+                )
 
         return ProcessStateResponse(
             process_instance_id=process_instance.id,
-            flowable_instance_id=process_instance.flowable_process_instance_id,
-            activities=activities,
+            status="running" if not process_is_finished else "terminated" if historic_process_data.get("deleteReason") else "completed",
+            activities=[ActivityStatus(**activity) for activity in activities_by_id.values()],
+            variables=list(variables_by_name.values()),
+            child_instances=child_instances,
         )
 
     async def _build_process_item(self, process_instance: ProcessInstance) -> ProcessInstanceResponse:
@@ -370,6 +432,20 @@ class ProcessService:
         if isinstance(value, int):
             return "integer"
         return "string"
+
+    async def _resolve_assignee_names(self, user_ids: set[str]) -> dict[str, str | None]:
+        if not user_ids:
+            return {}
+
+        result = await self.session.execute(
+            select(User)
+            .options(selectinload(User.employee))
+            .where(User.id.in_(sorted(user_ids)))
+        )
+        assignee_map: dict[str, str | None] = {}
+        for user in result.scalars().all():
+            assignee_map[str(user.id)] = user.employee.name if user.employee else None
+        return assignee_map
 
     def _generate_business_key(self) -> str:
         return f"bk_{uuid4().hex}"

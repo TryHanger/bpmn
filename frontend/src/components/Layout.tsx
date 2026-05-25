@@ -79,7 +79,7 @@ export function Layout({ children }: LayoutProps) {
         </div>
       </header>
 
-      <main className="min-h-0 flex-1 overflow-hidden p-4 lg:p-6">
+      <main className="min-h-0 flex-1 overflow-y-auto p-4 lg:p-6">
         <div className="flex h-full w-full flex-col">{children}</div>
       </main>
     </div>

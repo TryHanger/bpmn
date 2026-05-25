@@ -18,6 +18,7 @@ api_router.include_router(company_router, prefix="/companies", tags=["companies"
 api_router.include_router(roles_router, prefix="/roles", tags=["roles"])
 api_router.include_router(employees_router, prefix="/employees", tags=["employees"])
 api_router.include_router(process_router, prefix="/instances", tags=["instances"])
+api_router.include_router(process_router, prefix="/process-instances", tags=["process-instances"])
 api_router.include_router(tasks_router, prefix="/tasks", tags=["tasks"])
 api_router.include_router(schemas_router, prefix="/schemas", tags=["schemas"])
 api_router.include_router(templates_router, prefix="/templates", tags=["templates"])

@@ -14,6 +14,6 @@ export async function startProcess(payload: ProcessStartInput): Promise<ProcessI
 }
 
 export async function getProcessState(instanceId: string): Promise<ProcessStateResponse> {
-  const response = await axiosInstance.get<ProcessStateResponse>(`/api/instances/${instanceId}/state`)
+  const response = await axiosInstance.get<ProcessStateResponse>(`/api/process-instances/${instanceId}/state`)
   return response.data
 }

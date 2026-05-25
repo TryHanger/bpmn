@@ -140,19 +140,37 @@ export interface ProcessListResponse {
 
 export interface ActivityStatus {
   activityId: string
-  name: string | null
+  activityName: string | null
+  activityType: string
   status: 'pending' | 'active' | 'completed' | 'rejected' | 'skipped' | 'interrupted'
   assignee: string | null
-  bpmn_assignee: string | null
   startTime: string | null
   endTime: string | null
-  deleteReason: string | null
+  durationInMillis: number | null
+  calledProcessInstanceId: string | null
+}
+
+export interface ProcessVariable {
+  name: string
+  type: string
+  value: unknown
+}
+
+export interface ChildInstance {
+  activityId: string
+  processInstanceId: string
+  status: 'running' | 'completed' | 'terminated'
+  processDefinitionName: string | null
+  startTime: string | null
+  endTime: string | null
 }
 
 export interface ProcessStateResponse {
   process_instance_id: string
-  flowable_instance_id: string
+  status: 'running' | 'completed' | 'terminated'
   activities: ActivityStatus[]
+  variables: ProcessVariable[]
+  child_instances: ChildInstance[]
 }
 
 export interface TaskRead {

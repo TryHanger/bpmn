@@ -1,335 +1,212 @@
-processInstanceId
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC" xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI" xmlns:flowable="http://flowable.org/bpmn" xmlns:activiti="http://activiti.org/bpmn" targetNamespace="http://www.activiti.org/test">
+  <process id="migrateMain" name="Тест миграции ОСНОВА" isExecutable="true">
+    <startEvent id="startEvent1" name="Start">
+      <outgoing>Flow_0gbs2yc</outgoing>
+    </startEvent>
+    <userTask id="Activity_04efcqc" name="HR" flowable:assignee="hr">
+      <incoming>Flow_0gbs2yc</incoming>
+      <outgoing>Flow_1v8kppt</outgoing>
+    </userTask>
+    <sequenceFlow id="Flow_1v8kppt" sourceRef="Activity_04efcqc" targetRef="Activity_0dhf2rq" />
+    <userTask id="Activity_0dhf2rq" name="MANAGER" flowable:assignee="manager">
+      <incoming>Flow_1v8kppt</incoming>
+      <outgoing>Flow_03p12va</outgoing>
+    </userTask>
+    <endEvent id="Event_1qdb6bb" name="End">
+      <incoming>Flow_0gz3qbt</incoming>
+    </endEvent>
+    <sequenceFlow id="Flow_03p12va" sourceRef="Activity_0dhf2rq" targetRef="Activity_0o7wldr" />
+    <sequenceFlow id="Flow_0gz3qbt" sourceRef="Activity_0o7wldr" targetRef="Event_1qdb6bb" />
+    <userTask id="Activity_0o7wldr" name="CEO" flowable:assignee="ceo">
+      <incoming>Flow_03p12va</incoming>
+      <outgoing>Flow_0gz3qbt</outgoing>
+    </userTask>
+    <sequenceFlow id="Flow_0gbs2yc" sourceRef="startEvent1" targetRef="Activity_04efcqc" />
+  </process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_migrateMain">
+    <bpmndi:BPMNPlane id="BPMNPlane_migrateMain" bpmnElement="migrateMain">
+      <bpmndi:BPMNShape id="startEvent1_di" bpmnElement="startEvent1">
+        <omgdc:Bounds x="152" y="82" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <omgdc:Bounds x="155" y="125" width="30" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_14njmu4_di" bpmnElement="Activity_04efcqc">
+        <omgdc:Bounds x="240" y="60" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0wkbpon_di" bpmnElement="Activity_0dhf2rq">
+        <omgdc:Bounds x="450" y="60" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1qdb6bb_di" bpmnElement="Event_1qdb6bb">
+        <omgdc:Bounds x="852" y="82" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <omgdc:Bounds x="860" y="125" width="20" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1he69ra_di" bpmnElement="Activity_0o7wldr">
+        <omgdc:Bounds x="680" y="60" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_1v8kppt_di" bpmnElement="Flow_1v8kppt">
+        <omgdi:waypoint x="340" y="100" />
+        <omgdi:waypoint x="450" y="100" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_03p12va_di" bpmnElement="Flow_03p12va">
+        <omgdi:waypoint x="550" y="100" />
+        <omgdi:waypoint x="680" y="100" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0gz3qbt_di" bpmnElement="Flow_0gz3qbt">
+        <omgdi:waypoint x="780" y="100" />
+        <omgdi:waypoint x="852" y="100" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0gbs2yc_di" bpmnElement="Flow_0gbs2yc">
+        <omgdi:waypoint x="188" y="100" />
+        <omgdi:waypoint x="240" y="100" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</definitions>
 
-762c579d-5445-11f1-b224-d2ad2a8d8500
 
-http://localhost:8080/flowable-rest/service/history/historic-process-instances?processInstanceId=762c579d-5445-11f1-b224-d2ad2a8d8500
 
-```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC" xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI" xmlns:flowable="http://flowable.org/bpmn" xmlns:activiti="http://activiti.org/bpmn" targetNamespace="http://www.activiti.org/test">
+  <process id="migrateMain" name="Тест миграции ОСНОВА" isExecutable="true">
+    <startEvent id="startEvent1" name="Start">
+      <outgoing>Flow_01y79ly</outgoing>
+    </startEvent>
+    <userTask id="Activity_04efcqc" name="HR" flowable:assignee="hr">
+      <incoming>Flow_10o9iji</incoming>
+      <outgoing>Flow_1v8kppt</outgoing>
+    </userTask>
+    <sequenceFlow id="Flow_1v8kppt" sourceRef="Activity_04efcqc" targetRef="Activity_16sb18b" />
+    <callActivity id="Activity_16sb18b" name="Вызов процесса" calledElement="migrateProcess">
+      <incoming>Flow_1v8kppt</incoming>
+      <outgoing>Flow_1e89ajt</outgoing>
+    </callActivity>
+    <sequenceFlow id="Flow_1e89ajt" sourceRef="Activity_16sb18b" targetRef="Activity_0dhf2rq" />
+    <userTask id="Activity_0dhf2rq" name="HR" flowable:assignee="hr">
+      <incoming>Flow_1e89ajt</incoming>
+      <outgoing>Flow_03p12va</outgoing>
+    </userTask>
+    <endEvent id="Event_1qdb6bb" name="End">
+      <incoming>Flow_0gz3qbt</incoming>
+    </endEvent>
+    <sequenceFlow id="Flow_03p12va" sourceRef="Activity_0dhf2rq" targetRef="Activity_0o7wldr" />
+    <sequenceFlow id="Flow_0gz3qbt" sourceRef="Activity_0o7wldr" targetRef="Event_1qdb6bb" />
+    <userTask id="Activity_0o7wldr" name="CEO" flowable:assignee="ceo">
+      <incoming>Flow_03p12va</incoming>
+      <outgoing>Flow_0gz3qbt</outgoing>
+    </userTask>
+    <sequenceFlow id="Flow_01y79ly" sourceRef="startEvent1" targetRef="Activity_16s7ltl" />
+    <userTask id="Activity_16s7ltl" name="MANAGER" flowable:assignee="manager">
+      <incoming>Flow_01y79ly</incoming>
+      <outgoing>Flow_10o9iji</outgoing>
+    </userTask>
+    <sequenceFlow id="Flow_10o9iji" sourceRef="Activity_16s7ltl" targetRef="Activity_04efcqc" />
+  </process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_migrateMain">
+    <bpmndi:BPMNPlane id="BPMNPlane_migrateMain" bpmnElement="migrateMain">
+      <bpmndi:BPMNShape id="startEvent1_di" bpmnElement="startEvent1">
+        <omgdc:Bounds x="152" y="82" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <omgdc:Bounds x="155" y="125" width="30" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_14njmu4_di" bpmnElement="Activity_04efcqc">
+        <omgdc:Bounds x="240" y="260" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1pazi2l_di" bpmnElement="Activity_16sb18b">
+        <omgdc:Bounds x="400" y="60" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0wkbpon_di" bpmnElement="Activity_0dhf2rq">
+        <omgdc:Bounds x="560" y="60" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1qdb6bb_di" bpmnElement="Event_1qdb6bb">
+        <omgdc:Bounds x="852" y="82" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <omgdc:Bounds x="860" y="125" width="20" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1he69ra_di" bpmnElement="Activity_0o7wldr">
+        <omgdc:Bounds x="710" y="170" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_02aydf7_di" bpmnElement="Activity_16s7ltl">
+        <omgdc:Bounds x="240" y="60" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_1v8kppt_di" bpmnElement="Flow_1v8kppt">
+        <omgdi:waypoint x="340" y="300" />
+        <omgdi:waypoint x="370" y="300" />
+        <omgdi:waypoint x="370" y="100" />
+        <omgdi:waypoint x="400" y="100" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1e89ajt_di" bpmnElement="Flow_1e89ajt">
+        <omgdi:waypoint x="500" y="100" />
+        <omgdi:waypoint x="560" y="100" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_03p12va_di" bpmnElement="Flow_03p12va">
+        <omgdi:waypoint x="660" y="100" />
+        <omgdi:waypoint x="760" y="100" />
+        <omgdi:waypoint x="760" y="170" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0gz3qbt_di" bpmnElement="Flow_0gz3qbt">
+        <omgdi:waypoint x="810" y="210" />
+        <omgdi:waypoint x="831" y="210" />
+        <omgdi:waypoint x="831" y="100" />
+        <omgdi:waypoint x="852" y="100" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_01y79ly_di" bpmnElement="Flow_01y79ly">
+        <omgdi:waypoint x="188" y="100" />
+        <omgdi:waypoint x="240" y="100" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_10o9iji_di" bpmnElement="Flow_10o9iji">
+        <omgdi:waypoint x="290" y="140" />
+        <omgdi:waypoint x="290" y="260" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</definitions>
+
+
+
+
+
+
+http://localhost:8080/flowable-rest/service/history/historic-task-instances?processInstanceId=62e9d417-5808-11f1-aeaf-3a043329faa3 GET
+
 {
     "data": [
         {
-            "id": "762c579d-5445-11f1-b224-d2ad2a8d8500",
-            "url": "http://localhost:8080/flowable-rest/service/history/historic-process-instances/762c579d-5445-11f1-b224-d2ad2a8d8500",
-            "name": null,
-            "businessKey": "bk_f473711d92a8490b88e7d344a7494123",
-            "businessStatus": null,
-            "processDefinitionId": "TestActivityCall:3:67abe0fc-5445-11f1-b224-d2ad2a8d8500",
-            "processDefinitionUrl": "http://localhost:8080/flowable-rest/service/repository/process-definitions/TestActivityCall:3:67abe0fc-5445-11f1-b224-d2ad2a8d8500",
-            "processDefinitionName": "TestActivityCall",
-            "processDefinitionDescription": null,
-            "startTime": "2026-05-20T12:14:33.729Z",
-            "endTime": "2026-05-20T12:14:46.298Z",
-            "durationInMillis": 12569,
-            "startUserId": "rest-admin",
-            "startActivityId": "startEvent1",
-            "endActivityId": "Event_0d8nqc7",
-            "deleteReason": null,
-            "superProcessInstanceId": null,
-            "variables": [],
-            "callbackId": null,
-            "callbackType": null,
-            "referenceId": null,
-            "referenceType": null,
-            "propagatedStageInstanceId": null,
-            "tenantId": ""
-        }
-    ],
-    "total": 1,
-    "start": 0,
-    "sort": "processInstanceId",
-    "order": "asc",
-    "size": 1
-}
-```
-
-http://localhost:8080/flowable-rest/service/history/historic-variable-instances?processInstanceId=762c579d-5445-11f1-b224-d2ad2a8d8500
-
-```xml
-{
-    "data": [
-        {
-            "id": "7da94df7-5445-11f1-b224-d2ad2a8d8500",
-            "processInstanceId": "762c579d-5445-11f1-b224-d2ad2a8d8500",
-            "processInstanceUrl": "http://localhost:8080/flowable-rest/service/history/historic-process-instances/762c579d-5445-11f1-b224-d2ad2a8d8500",
-            "taskId": null,
-            "executionId": "762c579d-5445-11f1-b224-d2ad2a8d8500",
-            "variable": {
-                "name": "hrApproved",
-                "type": "boolean",
-                "value": true,
-                "scope": "global"
-            }
-        },
-        {
-            "id": "762c579f-5445-11f1-b224-d2ad2a8d8500",
-            "processInstanceId": "762c579d-5445-11f1-b224-d2ad2a8d8500",
-            "processInstanceUrl": "http://localhost:8080/flowable-rest/service/history/historic-process-instances/762c579d-5445-11f1-b224-d2ad2a8d8500",
-            "taskId": null,
-            "executionId": "762c579d-5445-11f1-b224-d2ad2a8d8500",
-            "variable": {
-                "name": "initiatorUserId",
-                "type": "string",
-                "value": "f934d3b5-2340-410b-bdce-e88685e00063",
-                "scope": "global"
-            }
-        },
-        {
-            "id": "7b663bab-5445-11f1-b224-d2ad2a8d8500",
-            "processInstanceId": "762c579d-5445-11f1-b224-d2ad2a8d8500",
-            "processInstanceUrl": "http://localhost:8080/flowable-rest/service/history/historic-process-instances/762c579d-5445-11f1-b224-d2ad2a8d8500",
-            "taskId": null,
-            "executionId": "762c579d-5445-11f1-b224-d2ad2a8d8500",
-            "variable": {
-                "name": "managerApproved",
-                "type": "boolean",
-                "value": true,
-                "scope": "global"
-            }
-        },
-        {
-            "id": "762c7eb1-5445-11f1-b224-d2ad2a8d8500",
-            "processInstanceId": "762c579d-5445-11f1-b224-d2ad2a8d8500",
-            "processInstanceUrl": "http://localhost:8080/flowable-rest/service/history/historic-process-instances/762c579d-5445-11f1-b224-d2ad2a8d8500",
-            "taskId": null,
-            "executionId": "762c579d-5445-11f1-b224-d2ad2a8d8500",
-            "variable": {
-                "name": "priceBread",
-                "type": "integer",
-                "value": 300,
-                "scope": "global"
-            }
-        }
-    ],
-    "total": 4,
-    "start": 0,
-    "sort": "variableName",
-    "order": "asc",
-    "size": 4
-}
-```
-
-http://localhost:8080/flowable-rest/service/history/historic-activity-instances?processInstanceId=762c579d-5445-11f1-b224-d2ad2a8d8500
-
-```xml
-{
-    "data": [
-        {
-            "id": "762c7eb4-5445-11f1-b224-d2ad2a8d8500",
-            "activityId": "startEvent1",
-            "activityName": "Start",
-            "activityType": "startEvent",
-            "processDefinitionId": "TestActivityCall:3:67abe0fc-5445-11f1-b224-d2ad2a8d8500",
-            "processDefinitionUrl": "http://localhost:8080/flowable-rest/service/repository/process-definitions/TestActivityCall:3:67abe0fc-5445-11f1-b224-d2ad2a8d8500",
-            "processInstanceId": "762c579d-5445-11f1-b224-d2ad2a8d8500",
-            "processInstanceUrl": "http://localhost:8080/flowable-rest/service/history/historic-process-instances/762c579d-5445-11f1-b224-d2ad2a8d8500",
-            "executionId": "762c7eb3-5445-11f1-b224-d2ad2a8d8500",
-            "taskId": null,
-            "calledProcessInstanceId": null,
-            "assignee": null,
-            "startTime": "2026-05-20T12:14:33.730Z",
-            "endTime": "2026-05-20T12:14:33.730Z",
-            "durationInMillis": 0,
-            "tenantId": ""
-        },
-        {
-            "id": "762c7eb5-5445-11f1-b224-d2ad2a8d8500",
-            "activityId": "Flow_0qkwp7v",
-            "activityName": null,
-            "activityType": "sequenceFlow",
-            "processDefinitionId": "TestActivityCall:3:67abe0fc-5445-11f1-b224-d2ad2a8d8500",
-            "processDefinitionUrl": "http://localhost:8080/flowable-rest/service/repository/process-definitions/TestActivityCall:3:67abe0fc-5445-11f1-b224-d2ad2a8d8500",
-            "processInstanceId": "762c579d-5445-11f1-b224-d2ad2a8d8500",
-            "processInstanceUrl": "http://localhost:8080/flowable-rest/service/history/historic-process-instances/762c579d-5445-11f1-b224-d2ad2a8d8500",
-            "executionId": "762c7eb3-5445-11f1-b224-d2ad2a8d8500",
-            "taskId": null,
-            "calledProcessInstanceId": null,
-            "assignee": null,
-            "startTime": "2026-05-20T12:14:33.730Z",
-            "endTime": "2026-05-20T12:14:33.730Z",
-            "durationInMillis": 0,
-            "tenantId": ""
-        },
-        {
-            "id": "762ca5c6-5445-11f1-b224-d2ad2a8d8500",
-            "activityId": "Activity_0onax43",
-            "activityName": null,
-            "activityType": "userTask",
-            "processDefinitionId": "TestActivityCall:3:67abe0fc-5445-11f1-b224-d2ad2a8d8500",
-            "processDefinitionUrl": "http://localhost:8080/flowable-rest/service/repository/process-definitions/TestActivityCall:3:67abe0fc-5445-11f1-b224-d2ad2a8d8500",
-            "processInstanceId": "762c579d-5445-11f1-b224-d2ad2a8d8500",
-            "processInstanceUrl": "http://localhost:8080/flowable-rest/service/history/historic-process-instances/762c579d-5445-11f1-b224-d2ad2a8d8500",
-            "executionId": "762c7eb3-5445-11f1-b224-d2ad2a8d8500",
-            "taskId": "762ca5c7-5445-11f1-b224-d2ad2a8d8500",
-            "calledProcessInstanceId": null,
-            "assignee": "67893703-36ac-4093-a7ea-f970721ed5a3",
-            "startTime": "2026-05-20T12:14:33.731Z",
-            "endTime": "2026-05-20T12:14:42.499Z",
-            "durationInMillis": 8768,
-            "tenantId": ""
-        },
-        {
-            "id": "7b66b0df-5445-11f1-b224-d2ad2a8d8500",
-            "activityId": "Activity_1vm2ze8",
-            "activityName": null,
-            "activityType": "callActivity",
-            "processDefinitionId": "TestActivityCall:3:67abe0fc-5445-11f1-b224-d2ad2a8d8500",
-            "processDefinitionUrl": "http://localhost:8080/flowable-rest/service/repository/process-definitions/TestActivityCall:3:67abe0fc-5445-11f1-b224-d2ad2a8d8500",
-            "processInstanceId": "762c579d-5445-11f1-b224-d2ad2a8d8500",
-            "processInstanceUrl": "http://localhost:8080/flowable-rest/service/history/historic-process-instances/762c579d-5445-11f1-b224-d2ad2a8d8500",
-            "executionId": "762c7eb3-5445-11f1-b224-d2ad2a8d8500",
-            "taskId": null,
-            "calledProcessInstanceId": "7b66d7f0-5445-11f1-b224-d2ad2a8d8500",
-            "assignee": null,
-            "startTime": "2026-05-20T12:14:42.500Z",
-            "endTime": "2026-05-20T12:14:43.937Z",
-            "durationInMillis": 1437,
-            "tenantId": ""
-        },
-        {
-            "id": "7b66b0de-5445-11f1-b224-d2ad2a8d8500",
-            "activityId": "Flow_0smg5ss",
-            "activityName": null,
-            "activityType": "sequenceFlow",
-            "processDefinitionId": "TestActivityCall:3:67abe0fc-5445-11f1-b224-d2ad2a8d8500",
-            "processDefinitionUrl": "http://localhost:8080/flowable-rest/service/repository/process-definitions/TestActivityCall:3:67abe0fc-5445-11f1-b224-d2ad2a8d8500",
-            "processInstanceId": "762c579d-5445-11f1-b224-d2ad2a8d8500",
-            "processInstanceUrl": "http://localhost:8080/flowable-rest/service/history/historic-process-instances/762c579d-5445-11f1-b224-d2ad2a8d8500",
-            "executionId": "762c7eb3-5445-11f1-b224-d2ad2a8d8500",
-            "taskId": null,
-            "calledProcessInstanceId": null,
-            "assignee": null,
-            "startTime": "2026-05-20T12:14:42.500Z",
-            "endTime": "2026-05-20T12:14:42.500Z",
-            "durationInMillis": 0,
-            "tenantId": ""
-        },
-        {
-            "id": "7c421cd0-5445-11f1-b224-d2ad2a8d8500",
-            "activityId": "Gateway_12ed394",
-            "activityName": null,
-            "activityType": "exclusiveGateway",
-            "processDefinitionId": "TestActivityCall:3:67abe0fc-5445-11f1-b224-d2ad2a8d8500",
-            "processDefinitionUrl": "http://localhost:8080/flowable-rest/service/repository/process-definitions/TestActivityCall:3:67abe0fc-5445-11f1-b224-d2ad2a8d8500",
-            "processInstanceId": "762c579d-5445-11f1-b224-d2ad2a8d8500",
-            "processInstanceUrl": "http://localhost:8080/flowable-rest/service/history/historic-process-instances/762c579d-5445-11f1-b224-d2ad2a8d8500",
-            "executionId": "762c7eb3-5445-11f1-b224-d2ad2a8d8500",
-            "taskId": null,
-            "calledProcessInstanceId": null,
-            "assignee": null,
-            "startTime": "2026-05-20T12:14:43.938Z",
-            "endTime": "2026-05-20T12:14:43.969Z",
-            "durationInMillis": 31,
-            "tenantId": ""
-        },
-        {
-            "id": "7c421ccf-5445-11f1-b224-d2ad2a8d8500",
-            "activityId": "Flow_0dwnt1c",
-            "activityName": null,
-            "activityType": "sequenceFlow",
-            "processDefinitionId": "TestActivityCall:3:67abe0fc-5445-11f1-b224-d2ad2a8d8500",
-            "processDefinitionUrl": "http://localhost:8080/flowable-rest/service/repository/process-definitions/TestActivityCall:3:67abe0fc-5445-11f1-b224-d2ad2a8d8500",
-            "processInstanceId": "762c579d-5445-11f1-b224-d2ad2a8d8500",
-            "processInstanceUrl": "http://localhost:8080/flowable-rest/service/history/historic-process-instances/762c579d-5445-11f1-b224-d2ad2a8d8500",
-            "executionId": "762c7eb3-5445-11f1-b224-d2ad2a8d8500",
-            "taskId": null,
-            "calledProcessInstanceId": null,
-            "assignee": null,
-            "startTime": "2026-05-20T12:14:43.938Z",
-            "endTime": "2026-05-20T12:14:43.938Z",
-            "durationInMillis": 0,
-            "tenantId": ""
-        },
-        {
-            "id": "7c46d7c1-5445-11f1-b224-d2ad2a8d8500",
-            "activityId": "Flow_0swvhph",
-            "activityName": null,
-            "activityType": "sequenceFlow",
-            "processDefinitionId": "TestActivityCall:3:67abe0fc-5445-11f1-b224-d2ad2a8d8500",
-            "processDefinitionUrl": "http://localhost:8080/flowable-rest/service/repository/process-definitions/TestActivityCall:3:67abe0fc-5445-11f1-b224-d2ad2a8d8500",
-            "processInstanceId": "762c579d-5445-11f1-b224-d2ad2a8d8500",
-            "processInstanceUrl": "http://localhost:8080/flowable-rest/service/history/historic-process-instances/762c579d-5445-11f1-b224-d2ad2a8d8500",
-            "executionId": "762c7eb3-5445-11f1-b224-d2ad2a8d8500",
-            "taskId": null,
-            "calledProcessInstanceId": null,
-            "assignee": null,
-            "startTime": "2026-05-20T12:14:43.969Z",
-            "endTime": "2026-05-20T12:14:43.969Z",
-            "durationInMillis": 0,
-            "tenantId": ""
-        },
-        {
-            "id": "7c46fed2-5445-11f1-b224-d2ad2a8d8500",
-            "activityId": "Activity_1ejud9l",
-            "activityName": null,
-            "activityType": "userTask",
-            "processDefinitionId": "TestActivityCall:3:67abe0fc-5445-11f1-b224-d2ad2a8d8500",
-            "processDefinitionUrl": "http://localhost:8080/flowable-rest/service/repository/process-definitions/TestActivityCall:3:67abe0fc-5445-11f1-b224-d2ad2a8d8500",
-            "processInstanceId": "762c579d-5445-11f1-b224-d2ad2a8d8500",
-            "processInstanceUrl": "http://localhost:8080/flowable-rest/service/history/historic-process-instances/762c579d-5445-11f1-b224-d2ad2a8d8500",
-            "executionId": "762c7eb3-5445-11f1-b224-d2ad2a8d8500",
-            "taskId": "7c46fed3-5445-11f1-b224-d2ad2a8d8500",
-            "calledProcessInstanceId": null,
-            "assignee": "d7c0a02a-90fe-4d06-99da-682c8e464d9b",
-            "startTime": "2026-05-20T12:14:43.970Z",
-            "endTime": "2026-05-20T12:14:46.293Z",
-            "durationInMillis": 2323,
-            "tenantId": ""
-        },
-        {
-            "id": "7da99c1a-5445-11f1-b224-d2ad2a8d8500",
-            "activityId": "Flow_0055nvs",
-            "activityName": null,
-            "activityType": "sequenceFlow",
-            "processDefinitionId": "TestActivityCall:3:67abe0fc-5445-11f1-b224-d2ad2a8d8500",
-            "processDefinitionUrl": "http://localhost:8080/flowable-rest/service/repository/process-definitions/TestActivityCall:3:67abe0fc-5445-11f1-b224-d2ad2a8d8500",
-            "processInstanceId": "762c579d-5445-11f1-b224-d2ad2a8d8500",
-            "processInstanceUrl": "http://localhost:8080/flowable-rest/service/history/historic-process-instances/762c579d-5445-11f1-b224-d2ad2a8d8500",
-            "executionId": "762c7eb3-5445-11f1-b224-d2ad2a8d8500",
-            "taskId": null,
-            "calledProcessInstanceId": null,
-            "assignee": null,
-            "startTime": "2026-05-20T12:14:46.294Z",
-            "endTime": "2026-05-20T12:14:46.294Z",
-            "durationInMillis": 0,
-            "tenantId": ""
-        }
-    ],
-    "total": 11,
-    "start": 0,
-    "sort": "startTime",
-    "order": "asc",
-    "size": 10
-}
-```
-
-http://localhost:8080/flowable-rest/service/history/historic-task-instances?processInstanceId=762c579d-5445-11f1-b224-d2ad2a8d8500
-
-```xml
-{
-    "data": [
-        {
-            "id": "762ca5c7-5445-11f1-b224-d2ad2a8d8500",
-            "processDefinitionId": "TestActivityCall:3:67abe0fc-5445-11f1-b224-d2ad2a8d8500",
-            "processDefinitionUrl": "http://localhost:8080/flowable-rest/service/repository/process-definitions/TestActivityCall:3:67abe0fc-5445-11f1-b224-d2ad2a8d8500",
-            "processInstanceId": "762c579d-5445-11f1-b224-d2ad2a8d8500",
-            "processInstanceUrl": "http://localhost:8080/flowable-rest/service/history/historic-process-instances/762c579d-5445-11f1-b224-d2ad2a8d8500",
-            "executionId": "762c7eb3-5445-11f1-b224-d2ad2a8d8500",
-            "name": null,
+            "id": "62e9fb31-5808-11f1-aeaf-3a043329faa3",
+            "processDefinitionId": "migrateMain:8:4babd0f6-5808-11f1-aeaf-3a043329faa3",
+            "processDefinitionUrl": "http://localhost:8080/flowable-rest/service/repository/process-definitions/migrateMain:8:4babd0f6-5808-11f1-aeaf-3a043329faa3",
+            "processInstanceId": "62e9d417-5808-11f1-aeaf-3a043329faa3",
+            "processInstanceUrl": "http://localhost:8080/flowable-rest/service/history/historic-process-instances/62e9d417-5808-11f1-aeaf-3a043329faa3",
+            "executionId": "62e9fb2d-5808-11f1-aeaf-3a043329faa3",
+            "name": "HR",
             "description": null,
             "deleteReason": null,
             "owner": null,
-            "assignee": "67893703-36ac-4093-a7ea-f970721ed5a3",
-            "startTime": "2026-05-20T12:14:33.731Z",
-            "endTime": "2026-05-20T12:14:42.498Z",
-            "durationInMillis": 8767,
+            "assignee": "d7c0a02a-90fe-4d06-99da-682c8e464d9b",
+            "startTime": "2026-05-25T07:07:26.768Z",
+            "endTime": "2026-05-25T07:07:39.952Z",
+            "durationInMillis": 13184,
             "workTimeInMillis": null,
             "claimTime": null,
-            "taskDefinitionKey": "Activity_0onax43",
+            "taskDefinitionKey": "Activity_04efcqc",
             "formKey": null,
             "priority": 50,
             "dueDate": null,
             "parentTaskId": null,
-            "url": "http://localhost:8080/flowable-rest/service/history/historic-task-instances/762ca5c7-5445-11f1-b224-d2ad2a8d8500",
+            "url": "http://localhost:8080/flowable-rest/service/history/historic-task-instances/62e9fb31-5808-11f1-aeaf-3a043329faa3",
             "variables": [],
             "scopeDefinitionId": null,
             "scopeId": null,
@@ -340,28 +217,60 @@ http://localhost:8080/flowable-rest/service/history/historic-task-instances?proc
             "category": null
         },
         {
-            "id": "7c46fed3-5445-11f1-b224-d2ad2a8d8500",
-            "processDefinitionId": "TestActivityCall:3:67abe0fc-5445-11f1-b224-d2ad2a8d8500",
-            "processDefinitionUrl": "http://localhost:8080/flowable-rest/service/repository/process-definitions/TestActivityCall:3:67abe0fc-5445-11f1-b224-d2ad2a8d8500",
-            "processInstanceId": "762c579d-5445-11f1-b224-d2ad2a8d8500",
-            "processInstanceUrl": "http://localhost:8080/flowable-rest/service/history/historic-process-instances/762c579d-5445-11f1-b224-d2ad2a8d8500",
-            "executionId": "762c7eb3-5445-11f1-b224-d2ad2a8d8500",
-            "name": null,
+            "id": "6dfaedab-5808-11f1-aeaf-3a043329faa3",
+            "processDefinitionId": "migrateMain:8:4babd0f6-5808-11f1-aeaf-3a043329faa3",
+            "processDefinitionUrl": "http://localhost:8080/flowable-rest/service/repository/process-definitions/migrateMain:8:4babd0f6-5808-11f1-aeaf-3a043329faa3",
+            "processInstanceId": "62e9d417-5808-11f1-aeaf-3a043329faa3",
+            "processInstanceUrl": "http://localhost:8080/flowable-rest/service/history/historic-process-instances/62e9d417-5808-11f1-aeaf-3a043329faa3",
+            "executionId": "62e9fb2d-5808-11f1-aeaf-3a043329faa3",
+            "name": "HR",
             "description": null,
             "deleteReason": null,
             "owner": null,
             "assignee": "d7c0a02a-90fe-4d06-99da-682c8e464d9b",
-            "startTime": "2026-05-20T12:14:43.970Z",
-            "endTime": "2026-05-20T12:14:46.293Z",
-            "durationInMillis": 2323,
+            "startTime": "2026-05-25T07:07:45.334Z",
+            "endTime": "2026-05-25T07:07:54.133Z",
+            "durationInMillis": 8799,
             "workTimeInMillis": null,
             "claimTime": null,
-            "taskDefinitionKey": "Activity_1ejud9l",
+            "taskDefinitionKey": "Activity_0dhf2rq",
             "formKey": null,
             "priority": 50,
             "dueDate": null,
             "parentTaskId": null,
-            "url": "http://localhost:8080/flowable-rest/service/history/historic-task-instances/7c46fed3-5445-11f1-b224-d2ad2a8d8500",
+            "url": "http://localhost:8080/flowable-rest/service/history/historic-task-instances/6dfaedab-5808-11f1-aeaf-3a043329faa3",
+            "variables": [],
+            "scopeDefinitionId": null,
+            "scopeId": null,
+            "subScopeId": null,
+            "scopeType": null,
+            "propagatedStageInstanceId": null,
+            "tenantId": "",
+            "category": null
+        },
+        {
+            "id": "7339b3b2-5808-11f1-aeaf-3a043329faa3",
+            "processDefinitionId": "migrateMain:8:4babd0f6-5808-11f1-aeaf-3a043329faa3",
+            "processDefinitionUrl": "http://localhost:8080/flowable-rest/service/repository/process-definitions/migrateMain:8:4babd0f6-5808-11f1-aeaf-3a043329faa3",
+            "processInstanceId": "62e9d417-5808-11f1-aeaf-3a043329faa3",
+            "processInstanceUrl": "http://localhost:8080/flowable-rest/service/history/historic-process-instances/62e9d417-5808-11f1-aeaf-3a043329faa3",
+            "executionId": "62e9fb2d-5808-11f1-aeaf-3a043329faa3",
+            "name": "CEO",
+            "description": null,
+            "deleteReason": null,
+            "owner": null,
+            "assignee": "ceo",
+            "startTime": "2026-05-25T07:07:54.134Z",
+            "endTime": null,
+            "durationInMillis": null,
+            "workTimeInMillis": null,
+            "claimTime": null,
+            "taskDefinitionKey": "Activity_0o7wldr",
+            "formKey": null,
+            "priority": 50,
+            "dueDate": null,
+            "parentTaskId": null,
+            "url": "http://localhost:8080/flowable-rest/service/history/historic-task-instances/7339b3b2-5808-11f1-aeaf-3a043329faa3",
             "variables": [],
             "scopeDefinitionId": null,
             "scopeId": null,
@@ -372,778 +281,18 @@ http://localhost:8080/flowable-rest/service/history/historic-task-instances?proc
             "category": null
         }
     ],
-    "total": 2,
+    "total": 3,
     "start": 0,
     "sort": "taskInstanceId",
     "order": "asc",
-    "size": 2
-}
-```
-
-http://localhost:8080/flowable-rest/service/history/historic-detail?processInstanceId=762c579d-5445-11f1-b224-d2ad2a8d8500
-
-```json
-{
-    "data": [
-        {
-            "id": "762c7eb0-5445-11f1-b224-d2ad2a8d8500",
-            "processInstanceId": "762c579d-5445-11f1-b224-d2ad2a8d8500",
-            "processInstanceUrl": "http://localhost:8080/flowable-rest/service/history/historic-process-instances/762c579d-5445-11f1-b224-d2ad2a8d8500",
-            "executionId": "762c579d-5445-11f1-b224-d2ad2a8d8500",
-            "activityInstanceId": null,
-            "taskId": null,
-            "taskUrl": null,
-            "time": "2026-05-20T12:14:33.730Z",
-            "detailType": "variableUpdate",
-            "revision": 0,
-            "variable": {
-                "name": "initiatorUserId",
-                "type": "string",
-                "value": "f934d3b5-2340-410b-bdce-e88685e00063",
-                "scope": null
-            },
-            "propertyId": null,
-            "propertyValue": null
-        },
-        {
-            "id": "762c7eb2-5445-11f1-b224-d2ad2a8d8500",
-            "processInstanceId": "762c579d-5445-11f1-b224-d2ad2a8d8500",
-            "processInstanceUrl": "http://localhost:8080/flowable-rest/service/history/historic-process-instances/762c579d-5445-11f1-b224-d2ad2a8d8500",
-            "executionId": "762c579d-5445-11f1-b224-d2ad2a8d8500",
-            "activityInstanceId": null,
-            "taskId": null,
-            "taskUrl": null,
-            "time": "2026-05-20T12:14:33.730Z",
-            "detailType": "variableUpdate",
-            "revision": 0,
-            "variable": {
-                "name": "priceBread",
-                "type": "integer",
-                "value": 300,
-                "scope": null
-            },
-            "propertyId": null,
-            "propertyValue": null
-        },
-        {
-            "id": "7b663bac-5445-11f1-b224-d2ad2a8d8500",
-            "processInstanceId": "762c579d-5445-11f1-b224-d2ad2a8d8500",
-            "processInstanceUrl": "http://localhost:8080/flowable-rest/service/history/historic-process-instances/762c579d-5445-11f1-b224-d2ad2a8d8500",
-            "executionId": "762c579d-5445-11f1-b224-d2ad2a8d8500",
-            "activityInstanceId": "762ca5c6-5445-11f1-b224-d2ad2a8d8500",
-            "taskId": null,
-            "taskUrl": null,
-            "time": "2026-05-20T12:14:42.497Z",
-            "detailType": "variableUpdate",
-            "revision": 0,
-            "variable": {
-                "name": "managerApproved",
-                "type": "boolean",
-                "value": true,
-                "scope": null
-            },
-            "propertyId": null,
-            "propertyValue": null
-        },
-        {
-            "id": "7da97508-5445-11f1-b224-d2ad2a8d8500",
-            "processInstanceId": "762c579d-5445-11f1-b224-d2ad2a8d8500",
-            "processInstanceUrl": "http://localhost:8080/flowable-rest/service/history/historic-process-instances/762c579d-5445-11f1-b224-d2ad2a8d8500",
-            "executionId": "762c579d-5445-11f1-b224-d2ad2a8d8500",
-            "activityInstanceId": "7c46fed2-5445-11f1-b224-d2ad2a8d8500",
-            "taskId": null,
-            "taskUrl": null,
-            "time": "2026-05-20T12:14:46.293Z",
-            "detailType": "variableUpdate",
-            "revision": 0,
-            "variable": {
-                "name": "hrApproved",
-                "type": "boolean",
-                "value": true,
-                "scope": null
-            },
-            "propertyId": null,
-            "propertyValue": null
-        }
-    ],
-    "total": 4,
-    "start": 0,
-    "sort": "processInstanceId",
-    "order": "asc",
-    "size": 4
-}
-```
-
-http://localhost:8080/flowable-rest/service/runtime/executions?processInstanceId=2439e11c-5447-11f1-b224-d2ad2a8d8500
-
-```xml
-{
-    "data": [
-        {
-            "id": "2439e11c-5447-11f1-b224-d2ad2a8d8500",
-            "url": "http://localhost:8080/flowable-rest/service/runtime/executions/2439e11c-5447-11f1-b224-d2ad2a8d8500",
-            "parentId": null,
-            "parentUrl": null,
-            "superExecutionId": null,
-            "superExecutionUrl": null,
-            "processInstanceId": "2439e11c-5447-11f1-b224-d2ad2a8d8500",
-            "processInstanceUrl": "http://localhost:8080/flowable-rest/service/runtime/process-instances/2439e11c-5447-11f1-b224-d2ad2a8d8500",
-            "suspended": false,
-            "activityId": null,
-            "tenantId": ""
-        },
-        {
-            "id": "2439e122-5447-11f1-b224-d2ad2a8d8500",
-            "url": "http://localhost:8080/flowable-rest/service/runtime/executions/2439e122-5447-11f1-b224-d2ad2a8d8500",
-            "parentId": "2439e11c-5447-11f1-b224-d2ad2a8d8500",
-            "parentUrl": "http://localhost:8080/flowable-rest/service/runtime/executions/2439e11c-5447-11f1-b224-d2ad2a8d8500",
-            "superExecutionId": null,
-            "superExecutionUrl": null,
-            "processInstanceId": "2439e11c-5447-11f1-b224-d2ad2a8d8500",
-            "processInstanceUrl": "http://localhost:8080/flowable-rest/service/runtime/process-instances/2439e11c-5447-11f1-b224-d2ad2a8d8500",
-            "suspended": false,
-            "activityId": "Activity_0onax43",
-            "tenantId": ""
-        }
-    ],
-    "total": 2,
-    "start": 0,
-    "sort": "processInstanceId",
-    "order": "asc",
-    "size": 2
-}
-```
-
-http://localhost:8080/flowable-rest/service/runtime/tasks?processInstanceId=2439e11c-5447-11f1-b224-d2ad2a8d8500
-
-```json
-{
-    "data": [
-        {
-            "id": "2439e126-5447-11f1-b224-d2ad2a8d8500",
-            "url": "http://localhost:8080/flowable-rest/service/runtime/tasks/2439e126-5447-11f1-b224-d2ad2a8d8500",
-            "owner": null,
-            "assignee": "manager",
-            "delegationState": null,
-            "name": null,
-            "description": null,
-            "createTime": "2026-05-20T12:26:35.238Z",
-            "dueDate": null,
-            "priority": 50,
-            "suspended": false,
-            "claimTime": null,
-            "taskDefinitionKey": "Activity_0onax43",
-            "scopeDefinitionId": null,
-            "scopeId": null,
-            "subScopeId": null,
-            "scopeType": null,
-            "propagatedStageInstanceId": null,
-            "tenantId": "",
-            "category": null,
-            "formKey": null,
-            "parentTaskId": null,
-            "parentTaskUrl": null,
-            "executionId": "2439e122-5447-11f1-b224-d2ad2a8d8500",
-            "executionUrl": "http://localhost:8080/flowable-rest/service/runtime/executions/2439e122-5447-11f1-b224-d2ad2a8d8500",
-            "processInstanceId": "2439e11c-5447-11f1-b224-d2ad2a8d8500",
-            "processInstanceUrl": "http://localhost:8080/flowable-rest/service/runtime/process-instances/2439e11c-5447-11f1-b224-d2ad2a8d8500",
-            "processDefinitionId": "TestActivityCall:3:67abe0fc-5445-11f1-b224-d2ad2a8d8500",
-            "processDefinitionUrl": "http://localhost:8080/flowable-rest/service/repository/process-definitions/TestActivityCall:3:67abe0fc-5445-11f1-b224-d2ad2a8d8500",
-            "variables": []
-        }
-    ],
-    "total": 1,
-    "start": 0,
-    "sort": "id",
-    "order": "asc",
-    "size": 1
-}
-```
-
-http://localhost:8080/flowable-rest/service/runtime/tasks/2439e126-5447-11f1-b224-d2ad2a8d8500/variables
-
-```json
-[
-    {
-        "name": "initiatorUserId",
-        "type": "string",
-        "value": "f934d3b5-2340-410b-bdce-e88685e00063",
-        "scope": "global"
-    },
-    {
-        "name": "amount",
-        "type": "integer",
-        "value": 75,
-        "scope": "global"
-    }
-]
-```
-
-http://localhost:8080/flowable-rest/service/history/historic-process-instances/2439e11c-5447-11f1-b224-d2ad2a8d8500
-
-```json
-{
-    "id": "2439e11c-5447-11f1-b224-d2ad2a8d8500",
-    "url": "http://localhost:8080/flowable-rest/service/history/historic-process-instances/2439e11c-5447-11f1-b224-d2ad2a8d8500",
-    "name": null,
-    "businessKey": "bk_da728f18f3bd4df6b331b3ecb4937612",
-    "businessStatus": null,
-    "processDefinitionId": "TestActivityCall:3:67abe0fc-5445-11f1-b224-d2ad2a8d8500",
-    "processDefinitionUrl": "http://localhost:8080/flowable-rest/service/repository/process-definitions/TestActivityCall:3:67abe0fc-5445-11f1-b224-d2ad2a8d8500",
-    "processDefinitionName": "TestActivityCall",
-    "processDefinitionDescription": null,
-    "startTime": "2026-05-20T12:26:35.238Z",
-    "endTime": null,
-    "durationInMillis": null,
-    "startUserId": "rest-admin",
-    "startActivityId": "startEvent1",
-    "endActivityId": null,
-    "deleteReason": null,
-    "superProcessInstanceId": null,
-    "variables": [],
-    "callbackId": null,
-    "callbackType": null,
-    "referenceId": null,
-    "referenceType": null,
-    "propagatedStageInstanceId": null,
-    "tenantId": ""
-}
-```
-
-http://localhost:8080/flowable-rest/service/runtime/executions?processInstanceId=2439e11c-5447-11f1-b224-d2ad2a8d8500
-
-```json
-{
-    "data": [
-        {
-            "id": "2439e11c-5447-11f1-b224-d2ad2a8d8500",
-            "url": "http://localhost:8080/flowable-rest/service/runtime/executions/2439e11c-5447-11f1-b224-d2ad2a8d8500",
-            "parentId": null,
-            "parentUrl": null,
-            "superExecutionId": null,
-            "superExecutionUrl": null,
-            "processInstanceId": "2439e11c-5447-11f1-b224-d2ad2a8d8500",
-            "processInstanceUrl": "http://localhost:8080/flowable-rest/service/runtime/process-instances/2439e11c-5447-11f1-b224-d2ad2a8d8500",
-            "suspended": false,
-            "activityId": null,
-            "tenantId": ""
-        },
-        {
-            "id": "2439e122-5447-11f1-b224-d2ad2a8d8500",
-            "url": "http://localhost:8080/flowable-rest/service/runtime/executions/2439e122-5447-11f1-b224-d2ad2a8d8500",
-            "parentId": "2439e11c-5447-11f1-b224-d2ad2a8d8500",
-            "parentUrl": "http://localhost:8080/flowable-rest/service/runtime/executions/2439e11c-5447-11f1-b224-d2ad2a8d8500",
-            "superExecutionId": null,
-            "superExecutionUrl": null,
-            "processInstanceId": "2439e11c-5447-11f1-b224-d2ad2a8d8500",
-            "processInstanceUrl": "http://localhost:8080/flowable-rest/service/runtime/process-instances/2439e11c-5447-11f1-b224-d2ad2a8d8500",
-            "suspended": false,
-            "activityId": "Activity_0onax43",
-            "tenantId": ""
-        }
-    ],
-    "total": 2,
-    "start": 0,
-    "sort": "processInstanceId",
-    "order": "asc",
-    "size": 2
-}
-```
-
-```tsx
-import { useMemo } from 'react'
-import { useParams } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
-
-import { getProcesses, getProcessState } from '../api/instances'
-import { ActivityTimeline } from '../components/ActivityTimeline'
-import { ProcessViewer } from '../components/ProcessViewer'
-
-export function ProcessDetailPage() {
-  const { id } = useParams<{ id: string }>()
-
-  const processesQuery = useQuery({
-    queryKey: ['processes'],
-    queryFn: () => getProcesses(),
-  })
-
-  const process = useMemo(() => processesQuery.data?.items.find((item) => item.id === id), [id, processesQuery.data])
-
-  const stateQuery = useQuery({
-    queryKey: ['process-state', id],
-    queryFn: () => getProcessState(id ?? ''),
-    enabled: Boolean(id),
-    refetchInterval: process?.status === 'running' ? 4000 : false,
-  })
-
-  if (processesQuery.isLoading || stateQuery.isLoading) {
-    return <div className="text-slate-500">Загрузка...</div>
-  }
-
-  if (!process || !stateQuery.data) {
-    return <div className="rounded-3xl border border-slate-200 bg-white p-6 text-slate-600 shadow-xl shadow-slate-900/5">Процесс не найден.</div>
-  }
-
-  return (
-    <div className="space-y-6">
-      <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-xl shadow-slate-900/5">
-        <div className="text-xs uppercase tracking-[0.35em] text-slate-400">Process detail</div>
-        <h1 className="mt-3 text-3xl font-semibold text-slate-950">{process.name}</h1>
-        <div className="mt-2 text-sm text-slate-500">{process.process_definition_key} · {process.status}</div>
-      </div>
-
-      <div className="grid gap-6 xl:grid-cols-[1.5fr_1fr]">
-        <ProcessViewer instanceId={process.id} xmlTemplate={process.xml_template ?? ''} activities={stateQuery.data.activities} />
-        <ActivityTimeline activities={stateQuery.data.activities} />
-      </div>
-    </div>
-  )
+    "size": 3
 }
 
-```
+есть старт и енд
 
-```tsx
-import { useEffect, useRef } from 'react'
-import NavigatedViewer from 'bpmn-js/lib/NavigatedViewer'
+"startTime": "2026-05-25T07:07:54.134Z",
+"endTime": null,
 
-import type { ActivityStatus } from '../types/api'
-
-interface ProcessViewerProps {
-  instanceId: string
-  xmlTemplate: string
-  activities: ActivityStatus[]
-}
-
-type ViewerInstance = InstanceType<typeof NavigatedViewer>
-
-const COLORS: Record<ActivityStatus['status'], { stroke: string; fill: string }> = {
-  completed: { stroke: '#10B981', fill: '#ECFDF5' },
-  active: { stroke: '#3B82F6', fill: '#EFF6FF' },
-  pending: { stroke: '#9CA3AF', fill: '#F9FAFB' },
-  skipped: { stroke: '#6B7280', fill: '#F3F4F6' },
-  rejected: { stroke: '#EF4444', fill: '#FEF2F2' },
-  interrupted: { stroke: '#F59E0B', fill: '#FFFBEB' },
-}
-
-function badgeText(activity: ActivityStatus): string {
-  if (activity.status === 'completed') {
-    return `✓ ${activity.assignee ?? ''}`.trim()
-  }
-  if (activity.status === 'active') {
-    return `⏳ ${activity.assignee ?? ''}`.trim()
-  }
-  if (activity.status === 'skipped') {
-    return '—'
-  }
-  if (activity.status === 'rejected') {
-    return '✗'
-  }
-  if (activity.status === 'interrupted') {
-    return '!' 
-  }
-  return activity.assignee ?? '•'
-}
-
-export function ProcessViewer({ instanceId, xmlTemplate, activities }: ProcessViewerProps) {
-  const containerRef = useRef<HTMLDivElement | null>(null)
-  const viewerRef = useRef<ViewerInstance | null>(null)
-
-  useEffect(() => {
-    const container = containerRef.current
-    if (!container) {
-      return
-    }
-
-    const viewer = new NavigatedViewer({ container }) as ViewerInstance
-    viewerRef.current = viewer
-
-    let cancelled = false
-    void viewer
-      .importXML(xmlTemplate)
-      .then(() => {
-        if (cancelled) {
-          return
-        }
-        const canvas = viewer.get('canvas') as { setColor: (element: unknown, color: { stroke: string; fill: string }) => void }
-        const overlays = viewer.get('overlays') as { clear: () => void; add: (id: string, overlay: { position: { bottom: number; right: number }; html: string }) => void }
-        const elementRegistry = viewer.get('elementRegistry') as { get: (id: string) => unknown }
-
-        overlays.clear()
-        activities.forEach((activity) => {
-          const element = elementRegistry.get(activity.activityId)
-          if (!element) {
-            return
-          }
-          canvas.setColor(element, COLORS[activity.status])
-          overlays.add(activity.activityId, {
-            position: { bottom: -8, right: -8 },
-            html: `<div class="rounded-full border px-2 py-1 text-[10px] font-semibold shadow-sm ${activity.status === 'active' ? 'border-blue-200 bg-blue-100 text-blue-700' : 'border-slate-200 bg-white text-slate-600'}">${badgeText(activity)}</div>`,
-          })
-        })
-      })
-      .catch(() => undefined)
-
-    return () => {
-      cancelled = true
-      viewer.destroy()
-      viewerRef.current = null
-    }
-  }, [xmlTemplate, instanceId])
-
-  useEffect(() => {
-    const viewer = viewerRef.current
-    if (!viewer) {
-      return
-    }
-    void viewer.importXML(xmlTemplate).then(() => {
-      const canvas = viewer.get('canvas') as { setColor: (element: unknown, color: { stroke: string; fill: string }) => void }
-      const overlays = viewer.get('overlays') as { clear: () => void; add: (id: string, overlay: { position: { bottom: number; right: number }; html: string }) => void }
-      const elementRegistry = viewer.get('elementRegistry') as { get: (id: string) => unknown }
-
-      overlays.clear()
-      activities.forEach((activity) => {
-        const element = elementRegistry.get(activity.activityId)
-        if (!element) {
-          return
-        }
-        canvas.setColor(element, COLORS[activity.status])
-        overlays.add(activity.activityId, {
-          position: { bottom: -8, right: -8 },
-          html: `<div class="rounded-full border px-2 py-1 text-[10px] font-semibold shadow-sm ${activity.status === 'active' ? 'border-blue-200 bg-blue-100 text-blue-700' : 'border-slate-200 bg-white text-slate-600'}">${badgeText(activity)}</div>`,
-        })
-      })
-    })
-  }, [activities, xmlTemplate])
-
-  return <div ref={containerRef} className="h-[720px] overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-xl shadow-slate-900/5" />
-}
-
-```
-
-```tsx
-import { useEffect, useRef } from 'react'
-import NavigatedViewer from 'bpmn-js/lib/NavigatedViewer'
-
-import type { ActivityStatus } from '../types/api'
-
-interface ProcessViewerProps {
-  instanceId: string
-  xmlTemplate: string
-  activities: ActivityStatus[]
-}
-
-type ViewerInstance = InstanceType<typeof NavigatedViewer>
-
-const COLORS: Record<ActivityStatus['status'], { stroke: string; fill: string }> = {
-  completed: { stroke: '#10B981', fill: '#ECFDF5' },
-  active: { stroke: '#3B82F6', fill: '#EFF6FF' },
-  pending: { stroke: '#9CA3AF', fill: '#F9FAFB' },
-  skipped: { stroke: '#6B7280', fill: '#F3F4F6' },
-  rejected: { stroke: '#EF4444', fill: '#FEF2F2' },
-  interrupted: { stroke: '#F59E0B', fill: '#FFFBEB' },
-}
-
-function badgeText(activity: ActivityStatus): string {
-  if (activity.status === 'completed') {
-    return `✓ ${activity.assignee ?? ''}`.trim()
-  }
-  if (activity.status === 'active') {
-    return `⏳ ${activity.assignee ?? ''}`.trim()
-  }
-  if (activity.status === 'skipped') {
-    return '—'
-  }
-  if (activity.status === 'rejected') {
-    return '✗'
-  }
-  if (activity.status === 'interrupted') {
-    return '!' 
-  }
-  return activity.assignee ?? '•'
-}
-
-export function ProcessViewer({ instanceId, xmlTemplate, activities }: ProcessViewerProps) {
-  const containerRef = useRef<HTMLDivElement | null>(null)
-  const viewerRef = useRef<ViewerInstance | null>(null)
-
-  useEffect(() => {
-    const container = containerRef.current
-    if (!container) {
-      return
-    }
-
-    const viewer = new NavigatedViewer({ container }) as ViewerInstance
-    viewerRef.current = viewer
-
-    let cancelled = false
-    void viewer
-      .importXML(xmlTemplate)
-      .then(() => {
-        if (cancelled) {
-          return
-        }
-        const canvas = viewer.get('canvas') as { setColor: (element: unknown, color: { stroke: string; fill: string }) => void }
-        const overlays = viewer.get('overlays') as { clear: () => void; add: (id: string, overlay: { position: { bottom: number; right: number }; html: string }) => void }
-        const elementRegistry = viewer.get('elementRegistry') as { get: (id: string) => unknown }
-
-        overlays.clear()
-        activities.forEach((activity) => {
-          const element = elementRegistry.get(activity.activityId)
-          if (!element) {
-            return
-          }
-          canvas.setColor(element, COLORS[activity.status])
-          overlays.add(activity.activityId, {
-            position: { bottom: -8, right: -8 },
-            html: `<div class="rounded-full border px-2 py-1 text-[10px] font-semibold shadow-sm ${activity.status === 'active' ? 'border-blue-200 bg-blue-100 text-blue-700' : 'border-slate-200 bg-white text-slate-600'}">${badgeText(activity)}</div>`,
-          })
-        })
-      })
-      .catch(() => undefined)
-
-    return () => {
-      cancelled = true
-      viewer.destroy()
-      viewerRef.current = null
-    }
-  }, [xmlTemplate, instanceId])
-
-  useEffect(() => {
-    const viewer = viewerRef.current
-    if (!viewer) {
-      return
-    }
-    void viewer.importXML(xmlTemplate).then(() => {
-      const canvas = viewer.get('canvas') as { setColor: (element: unknown, color: { stroke: string; fill: string }) => void }
-      const overlays = viewer.get('overlays') as { clear: () => void; add: (id: string, overlay: { position: { bottom: number; right: number }; html: string }) => void }
-      const elementRegistry = viewer.get('elementRegistry') as { get: (id: string) => unknown }
-
-      overlays.clear()
-      activities.forEach((activity) => {
-        const element = elementRegistry.get(activity.activityId)
-        if (!element) {
-          return
-        }
-        canvas.setColor(element, COLORS[activity.status])
-        overlays.add(activity.activityId, {
-          position: { bottom: -8, right: -8 },
-          html: `<div class="rounded-full border px-2 py-1 text-[10px] font-semibold shadow-sm ${activity.status === 'active' ? 'border-blue-200 bg-blue-100 text-blue-700' : 'border-slate-200 bg-white text-slate-600'}">${badgeText(activity)}</div>`,
-        })
-      })
-    })
-  }, [activities, xmlTemplate])
-
-  return <div ref={containerRef} className="h-[720px] overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-xl shadow-slate-900/5" />
-}
-
-```
-
-```tsx
-import { useEffect, useRef } from 'react'
-import BpmnModeler from 'bpmn-js/lib/Modeler'
-import NavigatedViewer from 'bpmn-js/lib/NavigatedViewer'
-
-import 'bpmn-js/dist/assets/diagram-js.css'
-import 'bpmn-js/dist/assets/bpmn-font/css/bpmn-embedded.css'
-
-interface BpmnEditorProps {
-  xml: string
-  onChange?: (xml: string) => void
-  readonly?: boolean
-  onModelerReady?: (modeler: any) => void
-  onElementSelect?: (element: any | null) => void
-}
-
-type DiagramInstance = any
-
-const isValidBpmnXml = (xml: string): boolean => {
-  return xml.trim().length > 0 && xml.includes('<') && xml.includes('bpmn')
-}
-
-export function BpmnEditor({ xml, onChange, readonly = false, onModelerReady, onElementSelect }: BpmnEditorProps) {
-  const containerRef = useRef<HTMLDivElement | null>(null)
-  const modelerRef = useRef<DiagramInstance | null>(null)
-  const lastImportedXml = useRef<string>('')
-  const isInternalChange = useRef(false)
-  const destroyedRef = useRef(false)
-  const initializedRef = useRef(false)
-
-  // Эффект 1: создаём/пересоздаём инстанс при смене readonly
-  useEffect(() => {
-    if (!containerRef.current) return
-
-    // Уничтожаем предыдущий инстанс и сбрасываем флаги
-    modelerRef.current?.destroy()
-    modelerRef.current = null
-    lastImportedXml.current = ''
-    destroyedRef.current = false
-    initializedRef.current = false
-
-    // Создаём нужный тип: Modeler для редактирования, NavigatedViewer для просмотра
-    const ModelerClass = readonly ? NavigatedViewer : BpmnModeler
-    const modeler = new ModelerClass({ container: containerRef.current })
-    modelerRef.current = modeler
-    // notify parent that modeler is ready
-    ;(onModelerReady as any)?.(modeler)
-
-    const resizeCanvas = () => {
-      try {
-        modelerRef.current?.get('canvas')?.resizeTo?.()
-      } catch (e) {
-        // ignore resize errors while the canvas is initializing
-      }
-    }
-
-    const resizeObserver = new ResizeObserver(() => {
-      resizeCanvas()
-    })
-
-    if (containerRef.current) {
-      resizeObserver.observe(containerRef.current)
-    }
-
-    const load = async () => {
-      // Защита: не загружаем пустой или невалидный XML
-      if (!isValidBpmnXml(xml)) {
-        console.warn('BpmnEditor: xml is empty or invalid, skipping importXML', { xmlLength: xml?.length })
-        return
-      }
-
-      try {
-        await modeler.importXML(xml)
-        lastImportedXml.current = xml
-        initializedRef.current = true
-        resizeCanvas()
-
-        // Подписываемся на изменения только в режиме редактирования
-        if (!readonly) {
-          modeler.on('commandStack.changed', async () => {
-            if (destroyedRef.current) return
-            isInternalChange.current = true
-            try {
-              const { xml: updatedXml } = await modeler.saveXML({ format: true })
-              lastImportedXml.current = updatedXml
-              onChange?.(updatedXml)
-            } catch (e) {
-              console.error('saveXML error:', e)
-            } finally {
-              setTimeout(() => {
-                isInternalChange.current = false
-              }, 0)
-            }
-          })
-        }
-
-        // Подписываемся на выбор элемента в любой режим
-        modeler.on && modeler.on('selection.changed', (event: any) => {
-          try {
-            const newSelection = event?.newSelection ?? []
-            const el = newSelection[0] ?? null
-            onElementSelect?.(el)
-          } catch (e) {
-            console.error('selection.changed handler error', e)
-          }
-        })
-      } catch (err) {
-        console.error('BpmnEditor importXML error:', err)
-      }
-    }
-
-    load()
-
-    return () => {
-      resizeObserver.disconnect()
-      destroyedRef.current = true
-      modeler.destroy()
-      modelerRef.current = null
-    }
-  }, [readonly])
-
-  // Эффект 2: обновляем XML без пересоздания инстанса
-  useEffect(() => {
-    if (!modelerRef.current) return
-    if (!initializedRef.current) return  // ← ждём завершения Эффекта 1
-    if (!isValidBpmnXml(xml)) return
-    if (xml === lastImportedXml.current) return
-    if (isInternalChange.current) return
-
-    const load = async () => {
-      try {
-        await modelerRef.current?.importXML(xml)
-        lastImportedXml.current = xml
-      } catch (err) {
-        console.error('BpmnEditor xml update error:', err)
-      }
-    }
-
-    load()
-  }, [xml])
-
-  return (
-    <div style={{ width: '100%', height: '100%', position: 'relative' }}>
-      {!isValidBpmnXml(xml) && (
-        <div
-          style={{
-            position: 'absolute',
-            inset: 0,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: '#9ca3af',
-            fontSize: '14px',
-            backgroundColor: '#f9fafb',
-          }}
-        >
-          Загрузка диаграммы...
-        </div>
-      )}
-      <div ref={containerRef} style={{ width: '100%', height: '100%' }} />
-    </div>
-  )
-}
-```
-
-companies: company.py:1 — хранит компании.
-
-Ключевые поля: id, name, admin_user_id, created_at, updated_at.
-Назначение: данные о компании, связи — roles, employees.
-employees: employee.py:1 — сотрудники компании.
-
-Ключевые поля: id, phone, name, role_id, company_id, created_at.
-Назначение: профиль сотрудника, связь на Role, Company и опционально User.
-users: user.py:1 — учётные записи пользователей.
-
-Ключевые поля: id, email, hashed_password, role, employee_id, company_id, created_at.
-Назначение: аутентификация/авторизация, связь на сотрудника и компанию.
-roles: role.py:1 — роли внутри компании.
-
-Ключевые поля: id, name, flowable_group, company_id, created_at, updated_at.
-Назначение: роли/группы, связь на employees. Уникальность по (company_id, name).
-refresh_tokens: refresh_token.py:1 — refresh-токены для сессий.
-
-Ключевые поля: id, user_id, token_hash, expires_at, revoked, created_at.
-Назначение: управление долгоживущими сессиями/отзыв токенов.
-process_schemas: process_schema.py:1 — описания схем процессов.
-
-Ключевые поля: id, name, description, created_at.
-Назначение: шаблон ролей и переменных процесса; связи roles и templates.
-process_schema_roles: process_schema.py:1 — роли внутри ProcessSchema.
-
-Ключевые поля: id, schema_id, role_name, display_name, order_index.
-Назначение: перечисление ролей схемы и связь на переменные.
-process_schema_variables: process_schema.py:1 — переменные схемы процесса.
-
-Ключевые поля: id, schema_id, role_id, name, label, type, required, readable_by_roles, order_index.
-Назначение: описание полей (переменных) процесса, права чтения по ролям.
-templates: template.py:1 — описание шаблонов процессов.
-
-Ключевые поля: id, name, process_definition_key, status, current_version_id, schema_id, created_at, updated_at.
-Назначение: метаданные шаблона; связи на versions и schema.
-template_versions: template_version.py:1 — версии шаблона.
-
-Ключевые поля: id, template_id, deployment_id, process_definition_id, xml_template, version, flowable_version, status, created_at.
-Назначение: хранение XML-версий шаблонов, статус деплоя и связанная Flowable-информация.
-process_instances: process_instance.py:1 — запущенные экземпляры процессов.
-
-Ключевые поля: id, name, company_id, flowable_process_instance_id, template_id, process_definition_key, process_definition_id, business_key, xml_template, status, initiator_user_id, start_time, completed_at, created_at.
-Назначение: учёт запущенных процессов, связь на Template, хранение XML/идентификаторов Flowable и статуса.
+"taskDefinitionKey": "Activity_04efcqc", выполнен
+"taskDefinitionKey": "Activity_0dhf2rq", выполнен
+"taskDefinitionKey": "Activity_0o7wldr", не выполенен, значит на нем
