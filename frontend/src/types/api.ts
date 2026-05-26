@@ -191,6 +191,24 @@ export interface ProcessStateResponse {
   child_instances: ChildInstance[]
 }
 
+export interface AuditTaskRead {
+  activityId: string
+  name: string | null
+  assignee: string | null
+  startTime: string | null
+  endTime: string | null
+  durationInMillis: number | null
+  status: 'active' | 'completed'
+}
+
+export interface AuditResponse {
+  bpmnXml: string
+  activeActivityIds: string[]
+  completedActivityIds: string[]
+  tasks: AuditTaskRead[]
+  activityCounts: Record<string, number>
+}
+
 export interface TaskRead {
   id: string
   assignee: string | null

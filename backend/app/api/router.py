@@ -1,6 +1,7 @@
 from fastapi import APIRouter
 
 from app.api.routes.auth import router as auth_router
+from app.api.routes.audit import router as audit_router
 from app.api.routes.company import router as company_router
 from app.api.routes.employees import router as employees_router
 from app.api.routes.health import router as health_router
@@ -17,6 +18,7 @@ api_router.include_router(auth_router, prefix="/auth", tags=["auth"])
 api_router.include_router(company_router, prefix="/companies", tags=["companies"])
 api_router.include_router(roles_router, prefix="/roles", tags=["roles"])
 api_router.include_router(employees_router, prefix="/employees", tags=["employees"])
+api_router.include_router(audit_router, prefix="/audit", tags=["audit"])
 api_router.include_router(process_router, prefix="/instances", tags=["instances"])
 api_router.include_router(process_router, prefix="/process-instances", tags=["process-instances"])
 api_router.include_router(tasks_router, prefix="/tasks", tags=["tasks"])

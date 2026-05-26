@@ -9,6 +9,7 @@ import { ToastHost } from './components/ToastHost'
 import { useAuth } from './hooks/useAuth'
 import { CompaniesPage } from './pages/CompaniesPage'
 import { EmployeesPage } from './pages/EmployeesPage'
+import { AuditPage } from './pages/AuditPage'
 import { LoginPage } from './pages/LoginPage'
 import { ProcessDetailPage } from './pages/ProcessDetailPage'
 import { ProcessesPage } from './pages/ProcessesPage'
@@ -65,6 +66,7 @@ export default function App() {
               <Route path="/employees" element={<PageErrorBoundary><EmployeesPage /></PageErrorBoundary>} />
               <Route path="/processes" element={<PageErrorBoundary><ProcessesPage /></PageErrorBoundary>} />
               <Route path="/processes/:id" element={<PageErrorBoundary><ProcessDetailPage /></PageErrorBoundary>} />
+              <Route path="/audit/:processInstanceId" element={<PageErrorBoundary><AuditPage /></PageErrorBoundary>} />
               <Route path="/schemas" element={<PageErrorBoundary><SchemasPage /></PageErrorBoundary>} />
               <Route path="/templates" element={<PageErrorBoundary><TemplatesPage /></PageErrorBoundary>} />
               <Route path="/tasks" element={<PageErrorBoundary><TasksPage /></PageErrorBoundary>} />

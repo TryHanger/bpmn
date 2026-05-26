@@ -15,8 +15,10 @@ from sqlalchemy.orm import selectinload
 from app.core.config import get_settings
 from app.models.process_instance import ProcessInstance
 from app.models.template import Template
+from app.models.template_version import TemplateVersion
 from app.models.user import User
 from app.models.user_types import ProcessInstanceStatus
+from app.schemas.audit import AuditResponse, AuditTaskRead
 from app.schemas.process import (
     ChildInstance,
     ActivityStatus,
@@ -348,6 +350,131 @@ class ProcessService:
             child_instances=child_instances,
         )
 
+    async def get_process_audit(self, process_instance_id: str, current_user: User) -> AuditResponse:
+        try:
+            process_instance_result, runtime_tasks_data, executions_data, historic_tasks_data, historic_activities_data = await asyncio.gather(
+                self.session.execute(
+                    select(ProcessInstance).where(ProcessInstance.flowable_process_instance_id == process_instance_id)
+                ),
+                self.flowable.list_runtime_tasks(params={"processInstanceId": process_instance_id}),
+                self.flowable.list_runtime_executions(process_instance_id),
+                self.flowable.list_historic_task_instances(process_instance_id),
+                self.flowable.list_historic_activity_instances(process_instance_id, start=0, size=100),
+            )
+        except Exception as exc:
+            logger.error("Flowable service error: %s", exc)
+            raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Flowable service unavailable") from exc
+
+        process_instance = process_instance_result.scalar_one_or_none()
+        if process_instance and current_user.company_id:
+            self._assert_company_access(current_user, process_instance.company_id)
+
+        runtime_tasks = runtime_tasks_data.get("data", []) or []
+        executions = executions_data.get("data", []) or []
+        historic_tasks = historic_tasks_data.get("data", []) or []
+        historic_activities = [item for item in (historic_activities_data.get("data", []) or []) if item.get("activityId")]
+
+        process_definition_id = self._extract_process_definition_id(
+            runtime_tasks=runtime_tasks,
+            executions=executions,
+            historic_tasks=historic_tasks,
+            historic_activities=historic_activities,
+            process_instance=process_instance,
+        )
+        if not process_definition_id:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Process definition not found")
+
+        bpmn_xml = await self._resolve_audit_bpmn_xml(process_definition_id, process_instance)
+
+        active_activity_ids: set[str] = {str(item["activityId"]) for item in executions if item.get("activityId")}
+        for item in historic_activities:
+            activity_id = item.get("activityId")
+            if activity_id and item.get("endTime") is None:
+                active_activity_ids.add(str(activity_id))
+
+        completed_activity_ids = sorted(
+            {
+                str(item["activityId"])
+                for item in historic_activities
+                if item.get("activityId") and item.get("endTime") is not None and str(item["activityId"]) not in active_activity_ids
+            }
+        )
+
+        activity_counts: dict[str, int] = defaultdict(int)
+        for item in historic_activities:
+            activity_id = item.get("activityId")
+            if activity_id:
+                activity_counts[str(activity_id)] += 1
+
+        task_records: dict[str, dict[str, object]] = {}
+
+        def upsert_task(record: dict[str, object]) -> None:
+            activity_id = str(record["activityId"])
+            existing = task_records.get(activity_id)
+            if existing is None:
+                task_records[activity_id] = record
+                return
+
+            if existing.get("status") == "active" and record.get("status") != "active":
+                return
+
+            existing_end = existing.get("endTime")
+            record_end = record.get("endTime")
+            if existing.get("status") == "completed" and record.get("status") == "completed":
+                if isinstance(existing_end, datetime) and isinstance(record_end, datetime) and existing_end >= record_end:
+                    return
+            task_records[activity_id] = record
+
+        for item in runtime_tasks:
+            activity_id = item.get("taskDefinitionKey")
+            if not activity_id:
+                continue
+            upsert_task(
+                {
+                    "activityId": str(activity_id),
+                    "name": item.get("name") or None,
+                    "assignee": item.get("assignee") or None,
+                    "startTime": self._parse_datetime_optional(item.get("createTime")),
+                    "endTime": None,
+                    "durationInMillis": None,
+                    "status": "active",
+                }
+            )
+
+        for item in historic_tasks:
+            activity_id = item.get("taskDefinitionKey")
+            if not activity_id:
+                continue
+            end_time = self._parse_datetime_optional(item.get("endTime"))
+            status_value = "active" if end_time is None else "completed"
+            upsert_task(
+                {
+                    "activityId": str(activity_id),
+                    "name": item.get("name") or None,
+                    "assignee": item.get("assignee") or None,
+                    "startTime": self._parse_datetime_optional(item.get("startTime")),
+                    "endTime": end_time,
+                    "durationInMillis": item.get("durationInMillis"),
+                    "status": status_value,
+                }
+            )
+
+        tasks = sorted(
+            (AuditTaskRead.model_validate(record) for record in task_records.values()),
+            key=lambda task: (
+                0 if task.status == "active" else 1,
+                task.startTime or datetime.min.replace(tzinfo=UTC),
+            ),
+        )
+
+        return AuditResponse(
+            bpmnXml=bpmn_xml,
+            activeActivityIds=sorted(active_activity_ids),
+            completedActivityIds=completed_activity_ids,
+            tasks=list(tasks),
+            activityCounts=dict(activity_counts),
+        )
+
     async def _build_process_item(self, process_instance: ProcessInstance) -> ProcessInstanceResponse:
         current_activities: list[str] = []
         if process_instance.status == ProcessInstanceStatus.STARTED:
@@ -419,6 +546,36 @@ class ProcessService:
             if template and template.current_version:
                 return template.current_version.xml_template
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="BPMN template not found for process instance")
+
+    async def _resolve_audit_bpmn_xml(self, process_definition_id: str, process_instance: ProcessInstance | None) -> str:
+        result = await self.session.execute(
+            select(TemplateVersion.xml_template).where(TemplateVersion.process_definition_id == process_definition_id).limit(1)
+        )
+        xml_template = result.scalar_one_or_none()
+        if xml_template:
+            return xml_template
+        if process_instance is not None:
+            return await self._resolve_process_xml(process_instance)
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="BPMN template not found for process definition")
+
+    def _extract_process_definition_id(
+        self,
+        *,
+        runtime_tasks: list[dict],
+        executions: list[dict],
+        historic_tasks: list[dict],
+        historic_activities: list[dict],
+        process_instance: ProcessInstance | None,
+    ) -> str | None:
+        sources = [runtime_tasks, executions, historic_tasks, historic_activities]
+        for source in sources:
+            for item in source:
+                definition_id = item.get("processDefinitionId")
+                if definition_id:
+                    return str(definition_id)
+        if process_instance is not None:
+            return process_instance.process_definition_id
+        return None
 
     def _dict_variables_to_flowable(self, variables: dict[str, object]) -> list[dict[str, object]]:
         payload: list[dict[str, object]] = []

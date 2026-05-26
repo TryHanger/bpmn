@@ -197,7 +197,7 @@ export function ProcessesPage() {
               <div>Business key: {process.business_key}</div>
             </div>
             <div className="mt-4 flex justify-end">
-              <Link to={`/processes/${process.id}`} className="rounded-2xl bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-700">
+              <Link to={`/audit/${process.flowable_process_instance_id}`} className="rounded-2xl bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-700">
                 Подробнее
               </Link>
             </div>

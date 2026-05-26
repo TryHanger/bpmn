@@ -132,11 +132,11 @@ class FlowableClient:
                 return {"data": []}
             return response.json()
 
-    async def list_historic_activity_instances(self, process_instance_id: str) -> dict:
+    async def list_historic_activity_instances(self, process_instance_id: str, *, start: int = 0, size: int = 100) -> dict:
         async with httpx.AsyncClient(base_url=self.base_url, auth=self.auth, timeout=30.0) as client:
             response = await client.get(
                 "/service/history/historic-activity-instances",
-                params={"processInstanceId": process_instance_id},
+                params={"processInstanceId": process_instance_id, "start": start, "size": size},
             )
             response.raise_for_status()
             return response.json()
