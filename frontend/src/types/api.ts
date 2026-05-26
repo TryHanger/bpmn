@@ -90,6 +90,24 @@ export interface DeployTemplateResponse {
   version: TemplateVersionRead
 }
 
+export interface ProcessMigrationResult {
+  process_instance_id: string
+  status: 'migrated' | 'migrated_with_state_change' | 'error' | 'skipped'
+  current_task_key: string | null
+  new_task_key: string | null
+  error: string | null
+}
+
+export interface DeployWithMigrationResponse {
+  template: TemplateRead
+  version: TemplateVersionRead
+  total_processes: number
+  migrated: number
+  state_changed: number
+  errors: number
+  results: ProcessMigrationResult[]
+}
+
 export type TemplateResponse = TemplateRead
 
 export interface RoleResponse {

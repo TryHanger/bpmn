@@ -127,7 +127,16 @@ class ProcessService:
 
     async def start_process(self, payload: ProcessStartRequest, current_user: User) -> ProcessInstanceResponse:
         self._assert_company_access(current_user, str(payload.company_id))
-        xml_template = await self._get_xml_template(payload.process_definition_key)
+        template_result = await self.session.execute(
+            select(Template)
+            .where(Template.process_definition_key == payload.process_definition_key)
+            .options(selectinload(Template.current_version))
+        )
+        template = template_result.scalar_one_or_none()
+        if template is None or template.current_version is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Template not found for processDefinitionKey")
+
+        xml_template = template.current_version.xml_template
         variables = self._variables_to_flowable(payload.variables, current_user.id)
         business_key = self._generate_business_key()
 
@@ -142,7 +151,7 @@ class ProcessService:
             name=payload.name,
             company_id=str(payload.company_id),
             flowable_process_instance_id=response["id"],
-            template_id=None,
+            template_id=template.id,
             process_definition_key=payload.process_definition_key,
             process_definition_id=response["processDefinitionId"],
             business_key=business_key,

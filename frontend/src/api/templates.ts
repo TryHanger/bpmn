@@ -1,5 +1,11 @@
 import { axiosInstance } from './axios'
-import type { DeployTemplateResponse, TemplateListResponse, TemplateRead, TemplateVersionListResponse } from '../types/api'
+import type {
+  DeployTemplateResponse,
+  DeployWithMigrationResponse,
+  TemplateListResponse,
+  TemplateRead,
+  TemplateVersionListResponse,
+} from '../types/api'
 
 export async function getTemplates(): Promise<TemplateRead[]> {
   const response = await axiosInstance.get<TemplateListResponse>('/api/templates')
@@ -25,6 +31,16 @@ export async function uploadTemplate(file: File, templateName?: string): Promise
 export async function deployTemplate(templateId: string): Promise<DeployTemplateResponse> {
   const formData = new FormData()
   const response = await axiosInstance.post<DeployTemplateResponse>(`/api/templates/${templateId}/deploy`, formData)
+  return response.data
+}
+
+export async function deployTemplateWithMigration(
+  templateId: string,
+  deploymentName?: string,
+): Promise<DeployWithMigrationResponse> {
+  const response = await axiosInstance.post<DeployWithMigrationResponse>(`/api/templates/${templateId}/deploy-with-migration`, {
+    deployment_name: deploymentName ?? null,
+  })
   return response.data
 }
 

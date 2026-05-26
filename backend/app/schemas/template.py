@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -43,6 +44,28 @@ class TemplateListResponse(BaseModel):
 class DeployTemplateResponse(BaseModel):
     template: TemplateRead
     version: TemplateVersionRead
+
+
+class DeployWithMigrationRequest(BaseModel):
+    deployment_name: str | None = None
+
+
+class ProcessMigrationResult(BaseModel):
+    process_instance_id: str
+    status: Literal["migrated", "migrated_with_state_change", "error", "skipped"]
+    current_task_key: str | None = None
+    new_task_key: str | None = None
+    error: str | None = None
+
+
+class DeployWithMigrationResponse(BaseModel):
+    template: TemplateRead
+    version: TemplateVersionRead
+    total_processes: int
+    migrated: int
+    state_changed: int
+    errors: int
+    results: list[ProcessMigrationResult] = Field(default_factory=list)
 
 
 class TemplateVersionListResponse(BaseModel):

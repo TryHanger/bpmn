@@ -11,15 +11,19 @@ from sqlalchemy.orm import selectinload
 
 from app.core.config import get_settings
 from app.models.template import Template
+from app.models.process_instance import ProcessInstance
 from app.models.template_version import TemplateVersion
-from app.models.user_types import TemplateStatus, TemplateVersionStatus
+from app.models.user_types import ProcessInstanceStatus, TemplateStatus, TemplateVersionStatus
 from app.schemas.template import (
     DeployTemplateResponse,
+    DeployWithMigrationResponse,
+    ProcessMigrationResult,
     TemplateListResponse,
     TemplateRead,
     TemplateVersionListResponse,
     TemplateVersionRead,
 )
+from app.services.migration_service import MigrationService
 from app.services.flowable import FlowableClient
 
 
@@ -222,6 +226,91 @@ class TemplateService:
         return DeployTemplateResponse(
             template=TemplateRead.model_validate(template),
             version=TemplateVersionRead.model_validate(version_to_deploy),
+        )
+
+    async def deploy_with_migration(
+        self,
+        *,
+        template_id: str,
+        deployment_name: str | None,
+    ) -> DeployWithMigrationResponse:
+        template = await self._get_template_or_404(template_id)
+        template_pk = template.id
+
+        old_version_result = await self.session.execute(
+            select(TemplateVersion)
+            .where(TemplateVersion.template_id == template_id)
+            .where(TemplateVersion.status == TemplateVersionStatus.DEPLOYED)
+            .order_by(TemplateVersion.created_at.desc())
+            .limit(1)
+        )
+        old_version = old_version_result.scalar_one_or_none()
+        old_process_definition_id = old_version.process_definition_id if old_version else None
+        old_bpmn_xml = old_version.xml_template if old_version else None
+
+        deploy_result = await self.deploy_template(template_id=template_id, file=None, deployment_name=deployment_name)
+        new_version = deploy_result.version
+        new_process_definition_id = new_version.process_definition_id
+
+        if old_process_definition_id is None or old_bpmn_xml is None:
+            return DeployWithMigrationResponse(
+                template=deploy_result.template,
+                version=new_version,
+                total_processes=0,
+                migrated=0,
+                state_changed=0,
+                errors=0,
+                results=[],
+            )
+
+        if not new_process_definition_id:
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="New process definition id was not returned by Flowable")
+
+        migration_service = MigrationService(
+            db=self.session,
+            flowable=FlowableClient(
+                base_url=self.settings.flowable_base_url,
+                username=self.settings.flowable_username,
+                password=self.settings.flowable_password,
+            ),
+        )
+
+        active_instances_result = await self.session.execute(
+            select(ProcessInstance)
+            .where(ProcessInstance.process_definition_id == old_process_definition_id)
+            .where(ProcessInstance.status == ProcessInstanceStatus.STARTED)
+        )
+        active_instances = list(active_instances_result.scalars().all())
+
+        results: list[ProcessMigrationResult] = []
+        for instance in active_instances:
+            migration_result = await migration_service.migrate_process(
+                process_instance_id=instance.flowable_process_instance_id,
+                old_bpmn_xml=old_bpmn_xml,
+                new_process_definition_id=new_process_definition_id,
+                new_bpmn_xml=new_version.xml_template,
+            )
+            results.append(migration_result)
+
+            if migration_result.status in {"migrated", "migrated_with_state_change"}:
+                instance.template_id = template_pk
+                instance.process_definition_id = new_process_definition_id
+                self.session.add(instance)
+
+        await self.session.commit()
+
+        migrated = sum(1 for item in results if item.status == "migrated")
+        state_changed = sum(1 for item in results if item.status == "migrated_with_state_change")
+        errors = sum(1 for item in results if item.status == "error")
+
+        return DeployWithMigrationResponse(
+            template=deploy_result.template,
+            version=new_version,
+            total_processes=len(active_instances),
+            migrated=migrated,
+            state_changed=state_changed,
+            errors=errors,
+            results=results,
         )
 
     async def _get_template_or_404(self, template_id: str, *, raise_404: bool = True) -> Template | None:

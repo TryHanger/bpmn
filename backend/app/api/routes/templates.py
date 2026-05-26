@@ -3,7 +3,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.session import get_db_session
 from app.schemas.process_schema import TemplateSchemaUpdate
-from app.schemas.template import DeployTemplateResponse, TemplateListResponse, TemplateRead, TemplateVersionListResponse
+from app.schemas.template import (
+    DeployTemplateResponse,
+    DeployWithMigrationRequest,
+    DeployWithMigrationResponse,
+    TemplateListResponse,
+    TemplateRead,
+    TemplateVersionListResponse,
+)
 from app.services.template_service import TemplateService
 from app.services.schema_service import SchemaService
 
@@ -44,6 +51,16 @@ async def deploy_template(
 ) -> DeployTemplateResponse:
     service = TemplateService(db)
     return await service.deploy_template(template_id=template_id, file=file, deployment_name=deployment_name)
+
+
+@router.post("/{template_id}/deploy-with-migration", response_model=DeployWithMigrationResponse)
+async def deploy_with_migration(
+    template_id: str,
+    payload: DeployWithMigrationRequest,
+    db: AsyncSession = Depends(get_db_session),
+) -> DeployWithMigrationResponse:
+    service = TemplateService(db)
+    return await service.deploy_with_migration(template_id=template_id, deployment_name=payload.deployment_name)
 
 
 @router.get("/{template_id}/versions")

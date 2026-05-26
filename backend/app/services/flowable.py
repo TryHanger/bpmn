@@ -58,6 +58,37 @@ class FlowableClient:
                 process_definition=process_definition,
             )
 
+    async def migrate_process_instance(self, process_instance_id: str, *, to_process_definition_id: str) -> dict:
+        async with httpx.AsyncClient(base_url=self.base_url, auth=self.auth, timeout=60.0) as client:
+            response = await client.post(
+                f"/service/runtime/process-instances/{process_instance_id}/migrate",
+                json={"toProcessDefinitionId": to_process_definition_id},
+            )
+            response.raise_for_status()
+            if not response.content:
+                return {}
+            return response.json()
+
+    async def change_process_state(
+        self,
+        process_instance_id: str,
+        *,
+        cancel_activity_ids: list[str],
+        start_activity_ids: list[str],
+    ) -> dict:
+        async with httpx.AsyncClient(base_url=self.base_url, auth=self.auth, timeout=60.0) as client:
+            response = await client.post(
+                f"/service/runtime/process-instances/{process_instance_id}/change-state",
+                json={
+                    "cancelActivityIds": cancel_activity_ids,
+                    "startActivityIds": start_activity_ids,
+                },
+            )
+            response.raise_for_status()
+            if not response.content:
+                return {}
+            return response.json()
+
     async def start_process(
         self,
         *,
