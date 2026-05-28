@@ -63,7 +63,7 @@ def build_flow_graph(xml: str) -> dict:
     return {"elements": elements, "sequenceFlows": sequence_flows, "outgoing": outgoing, "incoming": incoming}
 
 
-def _collect_downstream(start: str, graph: dict, stop_at: set[str]) -> set[str]:
+def _collect_downstream(start: str, graph: dict, stop_at: set[str], skip_joining_gateways: bool = True) -> set[str]:
     visited: set[str] = set()
     queue = [start]
     while queue:
@@ -75,7 +75,7 @@ def _collect_downstream(start: str, graph: dict, stop_at: set[str]) -> set[str]:
         elem_type = element_info.get("type", "")
         incoming_flows = graph["incoming"].get(current, [])
         is_joining_gateway = elem_type in {"exclusiveGateway", "parallelGateway", "inclusiveGateway"} and len(incoming_flows) > 1
-        if is_joining_gateway:
+        if is_joining_gateway and skip_joining_gateways:
             continue
         for flow_id in graph["outgoing"].get(current, []):
             target = graph["sequenceFlows"].get(flow_id, {}).get("target")
@@ -205,9 +205,27 @@ class ProcessService:
             graph = build_flow_graph(xml_template)
         except ET.ParseError as exc:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid BPMN XML") from exc
-        active_ids = {item["activityId"] for item in executions_data.get("data", []) if item.get("activityId")}
+        active_ids = {str(item["activityId"]) for item in executions_data.get("data", []) if item.get("activityId")}
 
         historic_activities = [item for item in historic_activities_data.get("data", []) if item.get("activityId")]
+        for item in historic_activities:
+            if item.get("activityId") and item.get("endTime") is None:
+                active_ids.add(str(item["activityId"]))
+
+        ROLLBACK_ACTIVITY_TYPES = {"userTask", "serviceTask", "callActivity", "subProcess"}
+
+        rollback_threshold: datetime | None = None
+        for item in historic_activities:
+            if item.get("endTime") is not None:
+                continue
+            if item.get("activityType") not in ROLLBACK_ACTIVITY_TYPES:
+                continue
+            start_dt = self._parse_datetime_optional(item.get("startTime"))
+            if start_dt is None:
+                continue
+            if rollback_threshold is None or start_dt < rollback_threshold:
+                rollback_threshold = start_dt
+
         assignee_ids = {str(item.get("assignee")) for item in historic_activities if item.get("assignee")}
         assignee_map = await self._resolve_assignee_names(assignee_ids)
 
@@ -237,12 +255,16 @@ class ProcessService:
             activity_type = str(item.get("activityType") or activities_by_id.get(activity_id, {}).get("activityType") or "")
             end_time = item.get("endTime")
             delete_reason = item.get("deleteReason")
-            if delete_reason and end_time:
+            if activity_id in active_ids:
+                status_value = "active"
+            elif delete_reason and end_time:
                 status_value = "rejected"
             elif end_time:
-                status_value = "completed"
-            elif end_time is None:
-                status_value = "active"
+                end_dt = self._parse_datetime_optional(end_time)
+                if rollback_threshold is not None and end_dt is not None and end_dt >= rollback_threshold:
+                    status_value = "pending"
+                else:
+                    status_value = "completed"
             else:
                 status_value = "pending"
 
@@ -385,6 +407,7 @@ class ProcessService:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Process definition not found")
 
         bpmn_xml = await self._resolve_audit_bpmn_xml(process_definition_id, process_instance)
+        graph = build_flow_graph(bpmn_xml)
 
         active_activity_ids: set[str] = {str(item["activityId"]) for item in executions if item.get("activityId")}
         for item in historic_activities:
@@ -392,13 +415,57 @@ class ProcessService:
             if activity_id and item.get("endTime") is None:
                 active_activity_ids.add(str(activity_id))
 
-        completed_activity_ids = sorted(
-            {
-                str(item["activityId"])
-                for item in historic_activities
-                if item.get("activityId") and item.get("endTime") is not None and str(item["activityId"]) not in active_activity_ids
-            }
-        )
+        active_task_ids = {
+            aid for aid in active_activity_ids
+            if graph["elements"].get(aid, {}).get("type") not in {"parallelGateway", "exclusiveGateway", "inclusiveGateway"}
+        }
+
+        downstream_of_active: set[str] = set()
+        for active_id in active_task_ids:
+            downstream_of_active.update(
+                _collect_downstream(active_id, graph, stop_at=set(), skip_joining_gateways=False)
+            )
+
+        downstream_of_active -= active_activity_ids
+
+        print(f"active_task_ids: {active_task_ids}")
+        print(f"downstream_of_active: {downstream_of_active}")
+
+        completed_activity_ids_set: set[str] = set()
+        for item in historic_activities:
+            activity_id = item.get("activityId")
+            if not activity_id:
+                continue
+            if item.get("activityType") == "sequenceFlow":
+                continue
+            end_time = item.get("endTime")
+            if end_time is None:
+                continue
+
+            activity_id_str = str(activity_id)
+            if activity_id_str in active_activity_ids:
+                continue
+
+            if activity_id_str in downstream_of_active:
+                continue
+
+            completed_activity_ids_set.add(activity_id_str)
+
+        completed_activity_ids = sorted(completed_activity_ids_set)
+
+        print("=== AUDIT DEBUG ===")
+        print(f"active_activity_ids: {sorted(active_activity_ids)}")
+        print("open activities (endTime=None):")
+        for item in historic_activities:
+            if item.get("endTime") is None:
+                print(f"  {item.get('activityId')} | type={item.get('activityType')} | start={item.get('startTime')}")
+        print("completed candidates (endTime!=None, not active):")
+        for item in historic_activities:
+            if item.get("endTime") is not None and str(item.get("activityId")) not in active_activity_ids:
+                passes = str(item.get("activityId")) in downstream_of_active
+                print(f"  {item.get('activityId')} | type={item.get('activityType')} | end={item.get('endTime')} | passes_filter={passes}")
+        print(f"final completedActivityIds: {completed_activity_ids}")
+        print("===================")
 
         activity_counts: dict[str, int] = defaultdict(int)
         for item in historic_activities:
