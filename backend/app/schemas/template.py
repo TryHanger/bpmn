@@ -46,8 +46,26 @@ class DeployTemplateResponse(BaseModel):
     version: TemplateVersionRead
 
 
+class ActiveProcessInstance(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: str
+    name: str
+    flowable_process_instance_id: str
+    business_key: str
+    status: str
+    start_time: datetime
+    current_activities: list[str] = Field(default_factory=list)
+
+
+class ActiveInstancesResponse(BaseModel):
+    items: list[ActiveProcessInstance]
+    total: int
+
+
 class DeployWithMigrationRequest(BaseModel):
     deployment_name: str | None = None
+    instance_ids: list[str] | None = None
 
 
 class ProcessMigrationResult(BaseModel):

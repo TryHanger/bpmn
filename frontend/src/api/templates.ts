@@ -1,6 +1,11 @@
 import { axiosInstance } from './axios'
 import type {
+  ActiveInstancesResponse,
   DeployTemplateResponse,
+  MigrationAnalysisRequest,
+  MigrationAnalysisResponse,
+  MigrationExecuteRequest,
+  MigrationExecuteResponse,
   DeployWithMigrationResponse,
   TemplateListResponse,
   TemplateRead,
@@ -34,12 +39,28 @@ export async function deployTemplate(templateId: string): Promise<DeployTemplate
   return response.data
 }
 
+export async function getActiveInstances(templateId: string): Promise<ActiveInstancesResponse> {
+  const response = await axiosInstance.get<ActiveInstancesResponse>(`/api/templates/${templateId}/active-instances`)
+  return response.data
+}
+
+export async function analyzeTemplateMigration(templateId: string, payload: MigrationAnalysisRequest): Promise<MigrationAnalysisResponse> {
+  const response = await axiosInstance.post<MigrationAnalysisResponse>(`/api/templates/${templateId}/migration-analysis`, payload)
+  return response.data
+}
+
+export async function executeTemplateMigration(templateId: string, payload: MigrationExecuteRequest): Promise<MigrationExecuteResponse> {
+  const response = await axiosInstance.post<MigrationExecuteResponse>(`/api/templates/${templateId}/migrate`, payload)
+  return response.data
+}
+
 export async function deployTemplateWithMigration(
   templateId: string,
-  deploymentName?: string,
+  options?: { deploymentName?: string; instanceIds?: string[] },
 ): Promise<DeployWithMigrationResponse> {
   const response = await axiosInstance.post<DeployWithMigrationResponse>(`/api/templates/${templateId}/deploy-with-migration`, {
-    deployment_name: deploymentName ?? null,
+    deployment_name: options?.deploymentName ?? null,
+    instance_ids: options?.instanceIds ?? null,
   })
   return response.data
 }

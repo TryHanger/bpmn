@@ -4,6 +4,7 @@ from app.models.employee import Employee
 from app.models.process_schema import ProcessSchema, ProcessSchemaRole, ProcessSchemaVariable
 from app.models.refresh_token import RefreshToken
 from app.models.process_instance import ProcessInstance
+from app.models.task_remark import TaskRemark
 from app.models.role import Role
 from app.models.user import User
 from app.models.template import Template
@@ -20,6 +21,7 @@ __all__ = [
 	"User",
 	"RefreshToken",
 	"ProcessInstance",
+	"TaskRemark",
 	"Template",
 	"TemplateVersion",
 ]

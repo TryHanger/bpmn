@@ -1,9 +1,11 @@
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import get_settings
 from app.db.session import get_db_session
 from app.schemas.process_schema import TemplateSchemaUpdate
 from app.schemas.template import (
+    ActiveInstancesResponse,
     DeployTemplateResponse,
     DeployWithMigrationRequest,
     DeployWithMigrationResponse,
@@ -11,10 +13,21 @@ from app.schemas.template import (
     TemplateRead,
     TemplateVersionListResponse,
 )
+from app.services.flowable import FlowableClient
+from app.services.migration_service import MigrationService
 from app.services.template_service import TemplateService
 from app.services.schema_service import SchemaService
 
 router = APIRouter()
+
+
+def _flowable_client() -> FlowableClient:
+    settings = get_settings()
+    return FlowableClient(
+        base_url=settings.flowable_base_url,
+        username=settings.flowable_username,
+        password=settings.flowable_password,
+    )
 
 
 @router.post("/upload", response_model=TemplateRead, status_code=status.HTTP_201_CREATED)
@@ -53,6 +66,15 @@ async def deploy_template(
     return await service.deploy_template(template_id=template_id, file=file, deployment_name=deployment_name)
 
 
+@router.get("/{template_id}/active-instances", response_model=ActiveInstancesResponse)
+async def get_active_instances(
+    template_id: str,
+    db: AsyncSession = Depends(get_db_session),
+) -> ActiveInstancesResponse:
+    service = MigrationService(db, _flowable_client())
+    return await service.get_active_instances(template_id)
+
+
 @router.post("/{template_id}/deploy-with-migration", response_model=DeployWithMigrationResponse)
 async def deploy_with_migration(
     template_id: str,
@@ -60,7 +82,11 @@ async def deploy_with_migration(
     db: AsyncSession = Depends(get_db_session),
 ) -> DeployWithMigrationResponse:
     service = TemplateService(db)
-    return await service.deploy_with_migration(template_id=template_id, deployment_name=payload.deployment_name)
+    return await service.deploy_with_migration(
+        template_id=template_id,
+        deployment_name=payload.deployment_name,
+        instance_ids=payload.instance_ids,
+    )
 
 
 @router.get("/{template_id}/versions")

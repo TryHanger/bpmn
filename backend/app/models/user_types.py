@@ -18,3 +18,4 @@ class TemplateVersionStatus(str, Enum):
 class ProcessInstanceStatus(str, Enum):
     STARTED = "STARTED"
     COMPLETED = "COMPLETED"
+    TERMINATED = "TERMINATED"

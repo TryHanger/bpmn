@@ -5,6 +5,8 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
+from app.schemas.task_remark import TaskRemarkRead
+
 
 class AuditTaskRead(BaseModel):
     activityId: str
@@ -14,6 +16,7 @@ class AuditTaskRead(BaseModel):
     endTime: datetime | None = None
     durationInMillis: int | None = None
     status: Literal["active", "completed"]
+    remarks: list[TaskRemarkRead] = Field(default_factory=list)
 
 
 class AuditResponse(BaseModel):

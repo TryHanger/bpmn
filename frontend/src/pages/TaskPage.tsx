@@ -3,7 +3,7 @@ import { Link, useParams } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import { getEmployees } from '../api/employees'
-import { claimTask, completeTask, getTaskContext } from '../api/tasks'
+import { claimTask, completeTask, getTaskContext, rejectTask } from '../api/tasks'
 import { useAuth } from '../hooks/useAuth'
 import { showToast } from '../lib/toast'
 import type { ProcessSchemaRead } from '../types/api'
@@ -97,6 +97,19 @@ export function TaskPage() {
     },
   })
 
+  const rejectMutation = useMutation({
+    mutationFn: () => rejectTask(taskId),
+    onSuccess: async () => {
+      showToast('Процесс отклонён и завершён', 'success')
+      await queryClient.invalidateQueries({ queryKey: ['task-context', taskId] })
+      await queryClient.invalidateQueries({ queryKey: ['tasks'] })
+      await queryClient.invalidateQueries({ queryKey: ['processes'] })
+    },
+    onError: () => {
+      showToast('Ошибка при отклонении', 'error')
+    },
+  })
+
   const handleComplete = async (outcome: 'approved' | 'rejected') => {
     if (writableVars.some((variable) => variable.required && (values[variable.name] === '' || values[variable.name] == null))) {
       showToast('Заполните обязательные поля', 'error')
@@ -104,6 +117,12 @@ export function TaskPage() {
     }
 
     await completeMutation.mutateAsync(outcome)
+  }
+
+  const handleReject = () => {
+    const confirmed = window.confirm('Отклонить процесс? Весь процесс будет завершён и все активные задачи закроются.')
+    if (!confirmed) return
+    rejectMutation.mutate()
   }
 
   const currentAssignee = contextQuery.data?.task.assignee
@@ -208,8 +227,13 @@ export function TaskPage() {
               <button type="button" onClick={() => handleComplete('approved')} disabled={completeMutation.isPending} className="rounded-2xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white disabled:opacity-60">
                 Одобрить
               </button>
-              <button type="button" onClick={() => handleComplete('rejected')} disabled={completeMutation.isPending} className="rounded-2xl bg-red-600 px-4 py-3 text-sm font-semibold text-white disabled:opacity-60">
-                Отклонить
+              <button
+                type="button"
+                onClick={handleReject}
+                disabled={rejectMutation.isPending}
+                className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-700 transition hover:border-rose-300 hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {rejectMutation.isPending ? 'Завершение...' : 'Отклонить'}
               </button>
             </div>
           </aside>

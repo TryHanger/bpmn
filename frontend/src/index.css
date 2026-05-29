@@ -61,6 +61,15 @@ a {
   stroke-width: 2px !important;
 }
 
+.highlight-completed-with-remark .djs-visual rect,
+.highlight-completed-with-remark .djs-visual circle,
+.highlight-completed-with-remark .djs-visual polygon {
+  fill: rgba(34, 197, 94, 0.2) !important;
+  stroke: #d97706 !important;
+  stroke-width: 2.5px !important;
+  stroke-dasharray: 5, 3 !important;
+}
+
 .highlight-active .djs-visual rect,
 .highlight-active .djs-visual circle,
 .highlight-active .djs-visual polygon {
@@ -75,6 +84,41 @@ a {
   fill: rgba(59, 130, 246, 0.22) !important;
   stroke: #2563eb !important;
   stroke-width: 3px !important;
+}
+
+.highlight-token-source .djs-visual rect,
+.highlight-token-source .djs-visual circle,
+.highlight-token-source .djs-visual polygon {
+  fill: rgba(234, 179, 8, 0.24) !important;
+  stroke: #ca8a04 !important;
+  stroke-width: 3px !important;
+}
+
+.highlight-added .djs-visual rect,
+.highlight-added .djs-visual circle,
+.highlight-added .djs-visual polygon {
+  fill: rgba(16, 185, 129, 0.18) !important;
+  stroke: #059669 !important;
+  stroke-width: 3px !important;
+  stroke-dasharray: 6, 3 !important;
+}
+
+.highlight-removed .djs-visual rect,
+.highlight-removed .djs-visual circle,
+.highlight-removed .djs-visual polygon {
+  fill: rgba(244, 63, 94, 0.16) !important;
+  stroke: #e11d48 !important;
+  stroke-width: 3px !important;
+  stroke-dasharray: 4, 4 !important;
+}
+
+.highlight-selected-target .djs-visual rect,
+.highlight-selected-target .djs-visual circle,
+.highlight-selected-target .djs-visual polygon {
+  fill: rgba(14, 165, 233, 0.2) !important;
+  stroke: #0284c7 !important;
+  stroke-width: 4px !important;
+  filter: drop-shadow(0 0 8px rgba(14, 165, 233, 0.2));
 }
 
 .pulse-dot {

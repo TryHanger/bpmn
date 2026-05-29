@@ -17,6 +17,7 @@ from app.models.refresh_token import RefreshToken  # noqa: F401
 from app.models.role import Role  # noqa: F401
 from app.models.template import Template  # noqa: F401
 from app.models.template_version import TemplateVersion  # noqa: F401
+from app.models.task_remark import TaskRemark  # noqa: F401
 from app.models.user import User  # noqa: F401
 
 config = context.config

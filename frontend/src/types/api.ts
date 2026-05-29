@@ -90,6 +90,59 @@ export interface DeployTemplateResponse {
   version: TemplateVersionRead
 }
 
+export interface MigrationAnalysisRequest {
+  target_version_id: string
+  instance_ids: string[]
+}
+
+export interface TaskInfo {
+  id: string
+  name: string
+}
+
+export interface MigrationAnalysisInstanceRead {
+  id: string
+  flowable_process_instance_id: string
+  name: string
+  start_time: string
+  current_activity_ids: string[]
+  needs_state_change: boolean
+}
+
+export interface MigrationAnalysisResponse {
+  old_bpmn_xml: string
+  new_bpmn_xml: string
+  added_activity_ids: string[]
+  removed_activity_ids: string[]
+  old_schema_tasks: TaskInfo[]
+  new_schema_tasks: TaskInfo[]
+  instances: MigrationAnalysisInstanceRead[]
+}
+
+export interface MigrationItemRequest {
+  instance_id: string
+  cancel_activity_ids: string[]
+  start_activity_ids: string[]
+}
+
+export interface MigrationExecuteRequest {
+  target_version_id: string
+  migrations: MigrationItemRequest[]
+}
+
+export interface MigrationResultItem {
+  instance_id: string
+  status: 'migrated' | 'migrated_with_state_change' | 'error'
+  error: string | null
+}
+
+export interface MigrationExecuteResponse {
+  migrated: number
+  state_changed: number
+  errors: number
+  results: MigrationResultItem[]
+}
+
 export interface ProcessMigrationResult {
   process_instance_id: string
   status: 'migrated' | 'migrated_with_state_change' | 'error' | 'skipped'
@@ -106,6 +159,21 @@ export interface DeployWithMigrationResponse {
   state_changed: number
   errors: number
   results: ProcessMigrationResult[]
+}
+
+export interface ActiveProcessInstance {
+  id: string
+  name: string
+  flowable_process_instance_id: string
+  business_key: string
+  status: string
+  start_time: string
+  current_activities: string[]
+}
+
+export interface ActiveInstancesResponse {
+  items: ActiveProcessInstance[]
+  total: number
 }
 
 export type TemplateResponse = TemplateRead
@@ -141,7 +209,7 @@ export interface ProcessInstanceResponse {
   process_definition_key: string
   process_definition_id: string
   business_key: string
-  status: 'running' | 'completed' | 'rejected'
+  status: 'running' | 'completed' | 'terminated'
   started_by: string
   xml_template: string | null
   start_time: string
@@ -199,6 +267,7 @@ export interface AuditTaskRead {
   endTime: string | null
   durationInMillis: number | null
   status: 'active' | 'completed'
+  remarks: TaskRemarkRead[]
 }
 
 export interface AuditResponse {
@@ -225,6 +294,16 @@ export interface TaskContextResponse {
   task: TaskRead
   schema: ProcessSchemaRead | null
   variables: Record<string, unknown>
+}
+
+export interface TaskRemarkRead {
+  id: string
+  task_definition_key: string
+  task_name: string | null
+  remark: string
+  author_id: string
+  author_name: string | null
+  created_at: string
 }
 
 export interface TaskBoardResponse {

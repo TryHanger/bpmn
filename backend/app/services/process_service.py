@@ -16,6 +16,7 @@ from app.core.config import get_settings
 from app.models.process_instance import ProcessInstance
 from app.models.template import Template
 from app.models.template_version import TemplateVersion
+from app.models.task_remark import TaskRemark
 from app.models.user import User
 from app.models.user_types import ProcessInstanceStatus
 from app.schemas.audit import AuditResponse, AuditTaskRead
@@ -28,6 +29,7 @@ from app.schemas.process import (
     ProcessVariable,
     ProcessStateResponse,
 )
+from app.schemas.task_remark import TaskRemarkRead
 from app.services.flowable import FlowableClient
 
 logger = logging.getLogger(__name__)
@@ -383,6 +385,12 @@ class ProcessService:
                 self.flowable.list_historic_task_instances(process_instance_id),
                 self.flowable.list_historic_activity_instances(process_instance_id, start=0, size=100),
             )
+            remarks_result = await self.session.execute(
+                select(TaskRemark)
+                .options(selectinload(TaskRemark.author).selectinload(User.employee))
+                .where(TaskRemark.process_instance_id == process_instance_id)
+                .order_by(TaskRemark.created_at.asc())
+            )
         except Exception as exc:
             logger.error("Flowable service error: %s", exc)
             raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Flowable service unavailable") from exc
@@ -395,6 +403,7 @@ class ProcessService:
         executions = executions_data.get("data", []) or []
         historic_tasks = historic_tasks_data.get("data", []) or []
         historic_activities = [item for item in (historic_activities_data.get("data", []) or []) if item.get("activityId")]
+        remarks = remarks_result.scalars().all()
 
         process_definition_id = self._extract_process_definition_id(
             runtime_tasks=runtime_tasks,
@@ -467,6 +476,24 @@ class ProcessService:
         print(f"final completedActivityIds: {completed_activity_ids}")
         print("===================")
 
+        remarks_by_key: dict[str, list[TaskRemarkRead]] = defaultdict(list)
+        for remark in remarks:
+            author_name = None
+            if remark.author is not None:
+                author_name = remark.author.employee.name if remark.author.employee is not None else remark.author.email
+
+            remarks_by_key[remark.task_definition_key].append(
+                TaskRemarkRead(
+                    id=remark.id,
+                    task_definition_key=remark.task_definition_key,
+                    task_name=remark.task_name,
+                    remark=remark.remark,
+                    author_id=remark.author_id,
+                    author_name=author_name,
+                    created_at=remark.created_at,
+                )
+            )
+
         activity_counts: dict[str, int] = defaultdict(int)
         for item in historic_activities:
             activity_id = item.get("activityId")
@@ -523,6 +550,7 @@ class ProcessService:
                     "endTime": end_time,
                     "durationInMillis": item.get("durationInMillis"),
                     "status": status_value,
+                    "remarks": remarks_by_key.get(str(activity_id), []),
                 }
             )
 

@@ -15,6 +15,8 @@ from app.models.process_instance import ProcessInstance
 from app.models.template_version import TemplateVersion
 from app.models.user_types import ProcessInstanceStatus, TemplateStatus, TemplateVersionStatus
 from app.schemas.template import (
+    ActiveInstancesResponse,
+    ActiveProcessInstance,
     DeployTemplateResponse,
     DeployWithMigrationResponse,
     ProcessMigrationResult,
@@ -26,7 +28,7 @@ from app.schemas.template import (
 from app.services.migration_service import MigrationService
 from app.services.flowable import FlowableClient
 
-
+from app.services.migration_service import MigrationService
 @dataclass(slots=True)
 class ParsedXmlTemplate:
     process_definition_key: str
@@ -228,11 +230,24 @@ class TemplateService:
             version=TemplateVersionRead.model_validate(version_to_deploy),
         )
 
+    async def get_active_instances(self, *, template_id: str) -> ActiveInstancesResponse:
+        await self._get_template_or_404(template_id)
+        migration_service = MigrationService(self.session, self._flowable_client())
+        return await migration_service.get_active_instances(template_id)
+
+    def _flowable_client(self) -> FlowableClient:
+        return FlowableClient(
+            base_url=self.settings.flowable_base_url,
+            username=self.settings.flowable_username,
+            password=self.settings.flowable_password,
+        )
+
     async def deploy_with_migration(
         self,
         *,
         template_id: str,
         deployment_name: str | None,
+        instance_ids: list[str] | None = None,
     ) -> DeployWithMigrationResponse:
         template = await self._get_template_or_404(template_id)
         template_pk = template.id
@@ -275,11 +290,15 @@ class TemplateService:
             ),
         )
 
-        active_instances_result = await self.session.execute(
+        instances_query = (
             select(ProcessInstance)
-            .where(ProcessInstance.process_definition_id == old_process_definition_id)
+            .where(ProcessInstance.template_id == template_pk)
             .where(ProcessInstance.status == ProcessInstanceStatus.STARTED)
         )
+        if instance_ids is not None:
+            instances_query = instances_query.where(ProcessInstance.id.in_(instance_ids))
+
+        active_instances_result = await self.session.execute(instances_query)
         active_instances = list(active_instances_result.scalars().all())
 
         results: list[ProcessMigrationResult] = []

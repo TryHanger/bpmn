@@ -3,11 +3,12 @@ import { isAxiosError } from 'axios'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import { BpmnEditor } from '../components/BpmnEditor'
+import { MigrationModal } from '../components/MigrationModal'
 import BpmnPropertiesPanel from '../components/BpmnPropertiesPanel'
 import {
   deleteTemplateVersion,
   deployTemplate,
-  deployTemplateWithMigration,
+  getActiveInstances,
   getTemplateVersions,
   getTemplates,
   linkSchemaToTemplate,
@@ -17,7 +18,7 @@ import { showToast } from '../lib/toast'
 import { useAuthStore } from '../store/authStore'
 import { getRoles } from '../api/roles'
 import { getSchema, getSchemas } from '../api/schemas'
-import type { DeployWithMigrationResponse, TemplateRead, TemplateVersionRead } from '../types/api'
+import type { ActiveProcessInstance, TemplateRead, TemplateVersionRead } from '../types/api'
 
 const VERSION_STATUS_STYLES: Record<TemplateVersionRead['status'], string> = {
   DRAFT: 'border-amber-200 bg-amber-50 text-amber-900',
@@ -212,7 +213,12 @@ export function TemplatesPage() {
   const [messageName, setMessageName] = useState('')
   const [secondProcessId, setSecondProcessId] = useState('')
   const [secondProcessName, setSecondProcessName] = useState('')
-  const [migrationResult, setMigrationResult] = useState<DeployWithMigrationResponse | null>(null)
+  const [migrationModalData, setMigrationModalData] = useState<{
+    templateId: string
+    templateName: string
+    targetVersionId: string
+    activeInstances: ActiveProcessInstance[]
+  } | null>(null)
 
   useEffect(() => {
     if (!templateNameTouched) {
@@ -404,35 +410,6 @@ export function TemplatesPage() {
     },
   })
 
-  const deployWithMigrationMutation = useMutation({
-    mutationFn: async () => {
-      if (!selectedTemplate) {
-        throw new Error('Шаблон не выбран')
-      }
-
-      return deployTemplateWithMigration(selectedTemplate.id)
-    },
-    onSuccess: async (result) => {
-      applyVersion(result.template, result.version)
-      await refreshTemplateQueries()
-
-      if (result.total_processes === 0) {
-        setMigrationResult(null)
-        showToast('Задеплоено. Активных процессов для миграции нет.', 'success')
-        return
-      }
-
-      setMigrationResult(result)
-      showToast(
-        `Задеплоено. Мигрировано: ${result.migrated + result.state_changed}/${result.total_processes}`,
-        result.errors > 0 ? 'error' : 'success',
-      )
-    },
-    onError: (error) => {
-      showToast(formatError(error, 'Ошибка деплоя с миграцией'), 'error')
-    },
-  })
-
   const deleteMutation = useMutation({
     mutationFn: deleteTemplateVersion,
     onSuccess: async () => {
@@ -461,6 +438,24 @@ export function TemplatesPage() {
       showToast(formatError(error, 'Не удалось привязать схему'), 'error')
     },
   })
+
+  const handleDeployWithMigrationClick = async () => {
+    if (!selectedTemplate || !currentDraftVersion) {
+      return
+    }
+
+    try {
+      const response = await getActiveInstances(selectedTemplate.id)
+      setMigrationModalData({
+        templateId: selectedTemplate.id,
+        templateName: selectedTemplate.name,
+        targetVersionId: currentDraftVersion.id,
+        activeInstances: response.items,
+      })
+    } catch {
+      showToast('Не удалось загрузить активные процессы', 'error')
+    }
+  }
 
   const handleFileInputChange = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
@@ -613,21 +608,6 @@ export function TemplatesPage() {
     }
 
     await deployMutation.mutateAsync()
-  }
-
-  const handleDeployWithMigration = async () => {
-    if (!selectedTemplate) {
-      return
-    }
-
-    const confirmed = window.confirm(
-      'Задеплоить и мигрировать все активные процессы на новую версию?\n\nАктивные процессы будут автоматически переведены на новый шаблон.',
-    )
-    if (!confirmed) {
-      return
-    }
-
-    await deployWithMigrationMutation.mutateAsync()
   }
 
   const handleDeleteVersion = async (version: TemplateVersionRead) => {
@@ -1020,7 +1000,7 @@ export function TemplatesPage() {
                         <button
                           type="button"
                           onClick={handleDeploy}
-                          disabled={deployMutation.isPending || deployWithMigrationMutation.isPending}
+                          disabled={deployMutation.isPending}
                           className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800 transition hover:border-emerald-300 hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-60"
                         >
                           {deployMutation.isPending ? 'Деплой...' : 'Задеплоить'}
@@ -1028,13 +1008,11 @@ export function TemplatesPage() {
 
                         <button
                           type="button"
-                          onClick={() => {
-                            void handleDeployWithMigration()
-                          }}
-                          disabled={deployMutation.isPending || deployWithMigrationMutation.isPending}
+                          onClick={handleDeployWithMigrationClick}
+                          disabled={deployMutation.isPending}
                           className="rounded-2xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm font-semibold text-blue-800 transition hover:border-blue-300 hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-60"
                         >
-                          {deployWithMigrationMutation.isPending ? 'Миграция...' : 'Задеплоить + мигрировать'}
+                          {deployMutation.isPending ? 'Деплой...' : 'Задеплоить + мигрировать'}
                         </button>
                       </>
                     ) : null}
@@ -1096,99 +1074,27 @@ export function TemplatesPage() {
         ) : null}
       </div>
 
-      {migrationResult ? (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 px-4 py-8 backdrop-blur-sm"
-          onClick={() => setMigrationResult(null)}
-          role="presentation"
-        >
-          <div
-            className="w-full max-w-3xl rounded-3xl bg-white p-6 shadow-2xl shadow-slate-950/20"
-            onClick={(event) => event.stopPropagation()}
-            role="presentation"
-          >
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <h2 className="text-xl font-semibold text-slate-900">Результат миграции</h2>
-                <p className="mt-1 text-sm text-slate-500">Миграция активных процессов на новую версию шаблона.</p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setMigrationResult(null)}
-                className="rounded-xl bg-slate-100 px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-200"
-              >
-                Закрыть
-              </button>
-            </div>
+      <MigrationModal
+        open={migrationModalData !== null}
+        templateId={migrationModalData?.templateId ?? null}
+        templateName={migrationModalData?.templateName ?? null}
+        targetVersionId={migrationModalData?.targetVersionId ?? null}
+        activeInstances={migrationModalData?.activeInstances ?? []}
+        onDeploy={async () => {
+          if (!selectedTemplate) {
+            throw new Error('Шаблон не выбран')
+          }
 
-            <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
-              {[
-                { label: 'Всего', value: migrationResult.total_processes, color: 'bg-slate-100 text-slate-700' },
-                { label: 'Мигрировано', value: migrationResult.migrated, color: 'bg-emerald-100 text-emerald-700' },
-                { label: 'Токен перенесён', value: migrationResult.state_changed, color: 'bg-blue-100 text-blue-700' },
-                { label: 'Ошибки', value: migrationResult.errors, color: 'bg-rose-100 text-rose-700' },
-              ].map((stat) => (
-                <div key={stat.label} className={["rounded-2xl p-3 text-center", stat.color].join(' ')}>
-                  <div className="text-2xl font-bold">{stat.value}</div>
-                  <div className="text-xs font-medium uppercase tracking-[0.22em]">{stat.label}</div>
-                </div>
-              ))}
-            </div>
-
-            <div className="mt-4 max-h-[28rem] space-y-2 overflow-y-auto pr-1">
-              {migrationResult.results.map((result) => (
-                <div
-                  key={result.process_instance_id}
-                  className={[
-                    'rounded-2xl border p-3',
-                    result.status === 'error'
-                      ? 'border-rose-200 bg-rose-50'
-                      : result.status === 'migrated_with_state_change'
-                        ? 'border-blue-200 bg-blue-50'
-                        : 'border-emerald-200 bg-emerald-50',
-                  ].join(' ')}
-                >
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="min-w-0 font-mono text-xs text-slate-500">{result.process_instance_id}</div>
-                    <span
-                      className={[
-                        'rounded-full px-2 py-1 text-xs font-semibold',
-                        result.status === 'error'
-                          ? 'bg-rose-200 text-rose-800'
-                          : result.status === 'migrated_with_state_change'
-                            ? 'bg-blue-200 text-blue-800'
-                            : 'bg-emerald-200 text-emerald-800',
-                      ].join(' ')}
-                    >
-                      {result.status === 'migrated'
-                        ? 'Мигрирован'
-                        : result.status === 'migrated_with_state_change'
-                          ? 'Токен перенесён'
-                          : result.status === 'skipped'
-                            ? 'Пропущен'
-                            : 'Ошибка'}
-                    </span>
-                  </div>
-
-                  {result.current_task_key ? (
-                    <div className="mt-2 text-xs text-slate-600">
-                      Задача: <span className="font-mono">{result.current_task_key}</span>
-                      {result.new_task_key ? (
-                        <span>
-                          {' '}
-                          → <span className="font-mono">{result.new_task_key}</span>
-                        </span>
-                      ) : null}
-                    </div>
-                  ) : null}
-
-                  {result.error ? <div className="mt-2 text-xs text-rose-600">{result.error}</div> : null}
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      ) : null}
-    </div>
+          const result = await deployTemplate(selectedTemplate.id)
+          await refreshTemplateQueries()
+          return result.version.process_definition_id!
+        }}
+        onClose={() => setMigrationModalData(null)}
+        onCompleted={async () => {
+          await refreshTemplateQueries()
+          setMigrationModalData(null)
+        }}
+      />
+      </div>
   )
 }

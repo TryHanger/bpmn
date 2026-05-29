@@ -124,6 +124,14 @@ class FlowableClient:
                 return {}
             return response.json()
 
+    async def terminate_process_instance(self, process_instance_id: str) -> dict:
+        async with httpx.AsyncClient(base_url=self.base_url, auth=self.auth, timeout=30.0) as client:
+            response = await client.delete(f"/service/runtime/process-instances/{process_instance_id}")
+            response.raise_for_status()
+            if not response.content:
+                return {}
+            return response.json()
+
     async def get_process_instance_variables(self, process_instance_id: str) -> dict:
         async with httpx.AsyncClient(base_url=self.base_url, auth=self.auth, timeout=30.0) as client:
             response = await client.get(f"/service/runtime/process-instances/{process_instance_id}/variables")

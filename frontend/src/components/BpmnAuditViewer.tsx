@@ -10,7 +10,7 @@ import type { AuditResponse, AuditTaskRead } from '../types/api'
 
 type ViewerInstance = InstanceType<typeof BpmnViewer>
 
-const markerClasses = ['highlight-completed', 'highlight-active', 'highlight-gateway-waiting'] as const
+const markerClasses = ['highlight-completed', 'highlight-completed-with-remark', 'highlight-active', 'highlight-gateway-waiting'] as const
 
 function formatDateTime(value: string | null): string {
   if (!value) {
@@ -188,6 +188,11 @@ export function BpmnAuditViewer() {
 
         const activeIds = new Set(audit.activeActivityIds)
         const completedIds = new Set(audit.completedActivityIds)
+        const activityIdsWithRemarks = new Set(
+          audit.tasks
+            .filter((task) => task.remarks && task.remarks.length > 0)
+            .map((task) => task.activityId),
+        )
         const elementsToHighlight = new Set<string>(allIds)
 
         elementsToHighlight.forEach((id) => {
@@ -198,11 +203,18 @@ export function BpmnAuditViewer() {
           }
 
           const isGateway = Boolean(element.businessObject?.$type?.includes('Gateway'))
-          const marker = completedIds.has(id)
-            ? 'highlight-completed'
-            : isGateway
-              ? 'highlight-gateway-waiting'
-              : 'highlight-active'
+          const hasRemark = activityIdsWithRemarks.has(id)
+
+          let marker: string
+          if (completedIds.has(id) && !activeIds.has(id)) {
+            marker = hasRemark ? 'highlight-completed-with-remark' : 'highlight-completed'
+          } else if (activeIds.has(id) && isGateway) {
+            marker = 'highlight-gateway-waiting'
+          } else if (activeIds.has(id)) {
+            marker = 'highlight-active'
+          } else {
+            return
+          }
           canvas.addMarker(id, marker)
           highlightedIdsRef.current.push(id)
 
@@ -210,6 +222,23 @@ export function BpmnAuditViewer() {
             overlays.add(id, {
               position: { bottom: -8, right: -8 },
               html: '<div class="pulse-dot"></div>',
+            })
+          }
+
+          if (hasRemark && completedIds.has(id)) {
+            overlays.add(id, {
+              position: { top: -10, left: -10 },
+              html: `
+                <div style="
+                  width: 20px; height: 20px;
+                  background: #f59e0b;
+                  border-radius: 50%;
+                  border: 2px solid white;
+                  display: flex; align-items: center; justify-content: center;
+                  font-size: 12px; font-weight: 900; color: white;
+                  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+                ">!</div>
+              `,
             })
           }
 
@@ -317,6 +346,34 @@ export function BpmnAuditViewer() {
                     <div className="text-xs uppercase tracking-[0.2em] text-slate-400">Повторы элемента</div>
                     <div className="mt-1 text-slate-900">{audit.activityCounts[task.activityId] ?? 1}</div>
                   </div>
+                </div>
+
+                <div className="mt-4 border-t border-slate-200 pt-4">
+                  <div className="mb-2 flex items-center justify-between">
+                    <div className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Замечания</div>
+                    {task.remarks && task.remarks.length > 0 ? (
+                      <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-bold text-amber-700">{task.remarks.length}</span>
+                    ) : null}
+                  </div>
+
+                  {(!task.remarks || task.remarks.length === 0) ? (
+                    <div className="rounded-xl border border-dashed border-slate-200 bg-white px-3 py-3 text-xs text-slate-400">Замечаний нет</div>
+                  ) : (
+                    <div className="space-y-2">
+                      {task.remarks.map((remark) => (
+                        <div key={remark.id} className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2">
+                          <div className="flex items-start gap-2">
+                            <span className="mt-0.5 text-amber-500">⚠</span>
+                            <p className="text-sm leading-relaxed text-slate-800">{remark.remark}</p>
+                          </div>
+                          <div className="mt-2 flex items-center justify-between">
+                            <span className="text-xs font-medium text-slate-600">{remark.author_name ?? remark.author_id}</span>
+                            <span className="text-xs text-slate-400">{new Date(remark.created_at).toLocaleString('ru-RU')}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             ))}
