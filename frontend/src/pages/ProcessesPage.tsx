@@ -29,6 +29,24 @@ function generateVariableId(): string {
   return 'var-' + Math.random().toString(36).substr(2, 9)
 }
 
+const STATUS_STYLES: Record<string, string> = {
+  ACTIVE: 'border-blue-200 bg-blue-50 text-blue-700',
+  COMPLETED: 'border-emerald-200 bg-emerald-50 text-emerald-700',
+  REJECTED: 'border-rose-200 bg-rose-50 text-rose-700',
+  SUSPENDED: 'border-amber-200 bg-amber-50 text-amber-700',
+  RUNNING: 'border-blue-200 bg-blue-50 text-blue-700',
+  TERMINATED: 'border-slate-200 bg-slate-100 text-slate-600',
+}
+
+const STATUS_LABELS: Record<string, string> = {
+  ACTIVE: 'Активен',
+  COMPLETED: 'Завершён',
+  REJECTED: 'Отклонён',
+  SUSPENDED: 'Приостановлен',
+  RUNNING: 'Активен',
+  TERMINATED: 'Завершён принудительно',
+}
+
 export function ProcessesPage() {
   const queryClient = useQueryClient()
   const user = useAuth((state) => state.user)
@@ -186,9 +204,14 @@ export function ProcessesPage() {
                 <div className="mt-2 text-lg font-semibold text-slate-950">{process.name}</div>
                 <div className="mt-1 text-sm text-slate-500">{process.process_definition_key}</div>
               </div>
-              <div className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.25em] text-slate-600">
-                {process.status}
-              </div>
+              <span
+                className={[
+                  'rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.25em]',
+                  STATUS_STYLES[String(process.status ?? '').toUpperCase()] ?? 'border-slate-200 bg-slate-50 text-slate-600',
+                ].join(' ')}
+              >
+                {STATUS_LABELS[String(process.status ?? '').toUpperCase()] ?? process.status}
+              </span>
             </div>
             <div className="mt-4 grid gap-3 text-sm text-slate-600 md:grid-cols-2 xl:grid-cols-4">
               <div>Активные задачи: {process.current_activities.length ? process.current_activities.join(', ') : '—'}</div>

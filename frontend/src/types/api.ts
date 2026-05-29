@@ -209,7 +209,7 @@ export interface ProcessInstanceResponse {
   process_definition_key: string
   process_definition_id: string
   business_key: string
-  status: 'running' | 'completed' | 'terminated'
+  status: 'running' | 'completed' | 'terminated' | 'rejected'
   started_by: string
   xml_template: string | null
   start_time: string
@@ -267,6 +267,7 @@ export interface AuditTaskRead {
   endTime: string | null
   durationInMillis: number | null
   status: 'active' | 'completed'
+  deleteReason: string | null
   remarks: TaskRemarkRead[]
 }
 
@@ -274,8 +275,10 @@ export interface AuditResponse {
   bpmnXml: string
   activeActivityIds: string[]
   completedActivityIds: string[]
+  deletedActivityIds: string[]
   tasks: AuditTaskRead[]
   activityCounts: Record<string, number>
+  processStatus: 'running' | 'completed' | 'rejected' | 'terminated'
 }
 
 export interface TaskRead {

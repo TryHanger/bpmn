@@ -10,7 +10,7 @@ import type { AuditResponse, AuditTaskRead } from '../types/api'
 
 type ViewerInstance = InstanceType<typeof BpmnViewer>
 
-const markerClasses = ['highlight-completed', 'highlight-completed-with-remark', 'highlight-active', 'highlight-gateway-waiting'] as const
+const markerClasses = ['highlight-completed', 'highlight-completed-with-remark', 'highlight-active', 'highlight-gateway-waiting', 'highlight-deleted'] as const
 
 function formatDateTime(value: string | null): string {
   if (!value) {
@@ -175,7 +175,7 @@ export function BpmnAuditViewer() {
         }
 
         const allElements = elementRegistry.getAll()
-        const allIds = [...audit.activeActivityIds, ...audit.completedActivityIds]
+        const allIds = [...new Set([...audit.activeActivityIds, ...audit.completedActivityIds, ...(audit.deletedActivityIds ?? [])])]
         console.log('Registry elements after importXML:', allElements.length)
         console.log('Looking for:', allIds)
         console.log('Found:', allIds.map((id) => ({ id, found: Boolean(elementRegistry.get(id)) })))
@@ -188,6 +188,7 @@ export function BpmnAuditViewer() {
 
         const activeIds = new Set(audit.activeActivityIds)
         const completedIds = new Set(audit.completedActivityIds)
+        const deletedIds = new Set(audit.deletedActivityIds ?? [])
         const activityIdsWithRemarks = new Set(
           audit.tasks
             .filter((task) => task.remarks && task.remarks.length > 0)
@@ -204,6 +205,38 @@ export function BpmnAuditViewer() {
 
           const isGateway = Boolean(element.businessObject?.$type?.includes('Gateway'))
           const hasRemark = activityIdsWithRemarks.has(id)
+
+          if (deletedIds.has(id)) {
+            markerClasses.forEach((marker) => {
+              try {
+                canvas.removeMarker(id, marker)
+              } catch {
+                // ignore
+              }
+            })
+            canvas.addMarker(id, 'highlight-deleted')
+            highlightedIdsRef.current.push(id)
+
+            try {
+              overlays.add(id, {
+                position: { top: -10, right: -10 },
+                html: `
+                  <div style="
+                    width: 20px; height: 20px;
+                    background: #dc2626;
+                    border-radius: 50%;
+                    border: 2px solid white;
+                    display: flex; align-items: center; justify-content: center;
+                    font-size: 12px; font-weight: 900; color: white;
+                    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+                  ">✕</div>
+                `,
+              })
+            } catch {
+              // ignore
+            }
+            return
+          }
 
           let marker: string
           if (completedIds.has(id) && !activeIds.has(id)) {
@@ -272,7 +305,24 @@ export function BpmnAuditViewer() {
             <div className="flex flex-wrap gap-3 text-sm">
               <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-3 py-2 font-semibold text-emerald-700">Завершено: {audit.completedActivityIds.length}</div>
               <div className="rounded-2xl border border-amber-200 bg-amber-50 px-3 py-2 font-semibold text-amber-700">Активно: {audit.activeActivityIds.length}</div>
+              {audit.deletedActivityIds?.length ? (
+                <div className="rounded-2xl border border-rose-200 bg-rose-50 px-3 py-2 font-semibold text-rose-700">Отклонено: {audit.deletedActivityIds.length}</div>
+              ) : null}
               <div className="rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 font-semibold text-slate-700">Элементов с циклами: {Object.values(audit.activityCounts).filter((count) => count > 1).length}</div>
+            </div>
+            <div className="mt-3 flex flex-wrap gap-3 text-xs text-slate-500">
+              <span className="flex items-center gap-1.5">
+                <span className="inline-block h-3 w-3 rounded-full bg-emerald-500" />
+                Завершено
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="inline-block h-3 w-3 rounded-full bg-amber-500" />
+                Активно
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="inline-block h-3 w-3 rounded-full bg-red-500" />
+                Отклонено
+              </span>
             </div>
           </div>
         ) : null}
@@ -332,6 +382,11 @@ export function BpmnAuditViewer() {
                     <div className="text-xs uppercase tracking-[0.2em] text-slate-400">Исполнитель</div>
                     <div className="mt-1 font-medium text-slate-900">{task.assignee ?? '—'}</div>
                   </div>
+                  {task.deleteReason ? (
+                    <div className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-700">
+                      ✕ Процесс отклонён - {task.deleteReason}
+                    </div>
+                  ) : null}
                   <div className="grid gap-3 sm:grid-cols-2">
                     <div>
                       <div className="text-xs uppercase tracking-[0.2em] text-slate-400">Старт</div>

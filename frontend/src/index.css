@@ -86,6 +86,14 @@ a {
   stroke-width: 3px !important;
 }
 
+.highlight-deleted .djs-visual rect,
+.highlight-deleted .djs-visual circle,
+.highlight-deleted .djs-visual polygon {
+  fill: rgba(239, 68, 68, 0.2) !important;
+  stroke: #dc2626 !important;
+  stroke-width: 2.5px !important;
+}
+
 .highlight-token-source .djs-visual rect,
 .highlight-token-source .djs-visual circle,
 .highlight-token-source .djs-visual polygon {

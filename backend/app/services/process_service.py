@@ -35,6 +35,19 @@ from app.services.flowable import FlowableClient
 logger = logging.getLogger(__name__)
 
 
+def map_flowable_status(flowable_status: str | None, delete_reason: str | None) -> ProcessInstanceStatus | None:
+    if delete_reason and "deleted" in delete_reason.lower():
+        return ProcessInstanceStatus.REJECTED
+
+    status_map = {
+        "active": ProcessInstanceStatus.STARTED,
+        "completed": ProcessInstanceStatus.COMPLETED,
+    }
+    if not flowable_status:
+        return None
+    return status_map.get(flowable_status.lower())
+
+
 def build_flow_graph(xml: str) -> dict:
     ns = "{http://www.omg.org/spec/BPMN/20100524/MODEL}"
     elements: dict[str, dict[str, str]] = {}
@@ -441,6 +454,7 @@ class ProcessService:
         print(f"downstream_of_active: {downstream_of_active}")
 
         completed_activity_ids_set: set[str] = set()
+        deleted_activity_ids_set: set[str] = set()
         for item in historic_activities:
             activity_id = item.get("activityId")
             if not activity_id:
@@ -448,6 +462,9 @@ class ProcessService:
             if item.get("activityType") == "sequenceFlow":
                 continue
             end_time = item.get("endTime")
+            delete_reason = item.get("deleteReason")
+            if delete_reason:
+                deleted_activity_ids_set.add(str(activity_id))
             if end_time is None:
                 continue
 
@@ -459,6 +476,16 @@ class ProcessService:
                 continue
 
             completed_activity_ids_set.add(activity_id_str)
+
+        # Flowable sometimes only sets deleteReason on the historic task instance
+        # (not on the activity instance), so also collect from historic_tasks.
+        for item in historic_tasks:
+            task_def_key = item.get("taskDefinitionKey")
+            if task_def_key and item.get("deleteReason"):
+                deleted_activity_ids_set.add(str(task_def_key))
+
+        # Ensure rejected tasks are not painted green — remove from completed set.
+        completed_activity_ids_set -= deleted_activity_ids_set
 
         completed_activity_ids = sorted(completed_activity_ids_set)
 
@@ -550,6 +577,7 @@ class ProcessService:
                     "endTime": end_time,
                     "durationInMillis": item.get("durationInMillis"),
                     "status": status_value,
+                    "deleteReason": item.get("deleteReason"),
                     "remarks": remarks_by_key.get(str(activity_id), []),
                 }
             )
@@ -562,12 +590,23 @@ class ProcessService:
             ),
         )
 
+        process_status = "running"
+        if process_instance is not None:
+            if process_instance.status == ProcessInstanceStatus.REJECTED:
+                process_status = "rejected"
+            elif process_instance.status == ProcessInstanceStatus.COMPLETED:
+                process_status = "completed"
+            elif process_instance.status == ProcessInstanceStatus.TERMINATED:
+                process_status = "terminated"
+
         return AuditResponse(
             bpmnXml=bpmn_xml,
             activeActivityIds=sorted(active_activity_ids),
             completedActivityIds=completed_activity_ids,
+            deletedActivityIds=sorted(deleted_activity_ids_set),
             tasks=list(tasks),
             activityCounts=dict(activity_counts),
+            processStatus=process_status,
         )
 
     async def _build_process_item(self, process_instance: ProcessInstance) -> ProcessInstanceResponse:
@@ -579,7 +618,14 @@ class ProcessService:
             except Exception:
                 logger.debug("Failed to load current activities for process %s", process_instance.id)
 
-        status = "running" if process_instance.status == ProcessInstanceStatus.STARTED else "completed"
+        if process_instance.status == ProcessInstanceStatus.STARTED:
+            status = "running"
+        elif process_instance.status == ProcessInstanceStatus.REJECTED:
+            status = "rejected"
+        elif process_instance.status == ProcessInstanceStatus.TERMINATED:
+            status = "terminated"
+        else:
+            status = "completed"
         return ProcessInstanceResponse.model_validate(
             {
                 "id": process_instance.id,
@@ -609,9 +655,16 @@ class ProcessService:
         started_processes = result.scalars().all()
         changed = False
         for process_instance in started_processes:
+            if process_instance.status == ProcessInstanceStatus.REJECTED:
+                continue
+
             historic = await self.flowable.get_historic_process_instance(process_instance.flowable_process_instance_id)
+            delete_reason = historic.get("deleteReason")
             if historic.get("endTime") is not None:
-                process_instance.status = ProcessInstanceStatus.COMPLETED
+                mapped_status = map_flowable_status(historic.get("status"), str(delete_reason) if delete_reason is not None else None)
+                if mapped_status is None:
+                    continue
+                process_instance.status = mapped_status
                 process_instance.completed_at = self._parse_datetime(historic["endTime"])
                 changed = True
         if changed:

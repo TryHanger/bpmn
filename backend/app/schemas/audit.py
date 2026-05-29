@@ -16,6 +16,7 @@ class AuditTaskRead(BaseModel):
     endTime: datetime | None = None
     durationInMillis: int | None = None
     status: Literal["active", "completed"]
+    deleteReason: str | None = None
     remarks: list[TaskRemarkRead] = Field(default_factory=list)
 
 
@@ -23,5 +24,7 @@ class AuditResponse(BaseModel):
     bpmnXml: str
     activeActivityIds: list[str] = Field(default_factory=list)
     completedActivityIds: list[str] = Field(default_factory=list)
+    deletedActivityIds: list[str] = Field(default_factory=list)
     tasks: list[AuditTaskRead] = Field(default_factory=list)
     activityCounts: dict[str, int] = Field(default_factory=dict)
+    processStatus: str = "running"  # running | completed | rejected | terminated

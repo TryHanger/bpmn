@@ -19,3 +19,4 @@ class ProcessInstanceStatus(str, Enum):
     STARTED = "STARTED"
     COMPLETED = "COMPLETED"
     TERMINATED = "TERMINATED"
+    REJECTED = "REJECTED"

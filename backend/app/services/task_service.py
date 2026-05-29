@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections import defaultdict
+import logging
 from typing import Any
 
 import httpx
@@ -22,6 +23,9 @@ from app.schemas.process import TaskBoardResponse, TaskCompleteRequest, TaskCont
 from app.schemas.process_schema import ProcessSchemaRead
 from app.schemas.task_remark import TaskRemarkCreate, TaskRemarkRead
 from app.services.flowable import FlowableClient
+
+
+logger = logging.getLogger(__name__)
 
 
 class TaskService:
@@ -60,41 +64,52 @@ class TaskService:
         )
 
     async def reject_and_terminate_process(self, task_id: str, current_user: User) -> dict:
-        await self._get_employee_role(current_user)
-
         try:
+            await self._get_employee_role(current_user)
+
+            print(f"[reject] load task_id={task_id}")
             task = await self.flowable.get_runtime_task(task_id)
+            print(f"[reject] task response for {task_id}: loaded")
+
+            process_instance_id = str(task.get("processInstanceId") or "")
+            print(f"[reject] process_instance_id={process_instance_id}")
+            if not process_instance_id:
+                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="processInstanceId not found")
+
+            print(f"[reject] delete process_instance_id={process_instance_id}")
+            delete_result = await self.flowable.terminate_process_instance(process_instance_id)
+            print(f"[reject] delete result for {process_instance_id}: {delete_result}")
+
+            instance = await self.session.scalar(
+                select(ProcessInstance).where(ProcessInstance.flowable_process_instance_id == process_instance_id)
+            )
+            print(f"[reject] db instance found={bool(instance)}")
+            if instance is not None:
+                instance.status = ProcessInstanceStatus.REJECTED
+                if instance.completed_at is None:
+                    from datetime import datetime, timezone
+
+                    instance.completed_at = datetime.now(timezone.utc)
+                self.session.add(instance)
+                await self.session.commit()
+                print(f"[reject] db updated process_instance_id={process_instance_id} status={instance.status}")
+
+            return {
+                "status": "rejected",
+                "process_instance_id": process_instance_id,
+                "rejected_by": str(current_user.id),
+            }
+        except HTTPException:
+            raise
         except httpx.HTTPStatusError as exc:
             if exc.response.status_code == status.HTTP_404_NOT_FOUND:
+                print(f"[reject] task load failed task_id={task_id} status={exc.response.status_code} body={exc.response.text[:200]}")
                 raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Task not found in Flowable") from exc
-            raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail="Failed to load task from Flowable") from exc
-
-        process_instance_id = str(task.get("processInstanceId") or "")
-        if not process_instance_id:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="processInstanceId not found")
-
-        try:
-            await self.flowable.terminate_process_instance(process_instance_id)
-        except httpx.HTTPStatusError as exc:
+            print(f"[reject] Flowable error task_id={task_id} status={exc.response.status_code} body={exc.response.text[:200]}")
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Flowable terminate failed: {exc.response.text}") from exc
-
-        instance = await self.session.scalar(
-            select(ProcessInstance).where(ProcessInstance.flowable_process_instance_id == process_instance_id)
-        )
-        if instance is not None:
-            instance.status = ProcessInstanceStatus.TERMINATED
-            if instance.completed_at is None:
-                from datetime import datetime, timezone
-
-                instance.completed_at = datetime.now(timezone.utc)
-            self.session.add(instance)
-            await self.session.commit()
-
-        return {
-            "status": "terminated",
-            "process_instance_id": process_instance_id,
-            "rejected_by": str(current_user.id),
-        }
+        except Exception as exc:
+            print(f"reject_and_terminate_process ERROR: {type(exc).__name__}: {exc}")
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(exc)) from exc
 
     async def complete_with_remark(self, task_id: str, payload: TaskRemarkCreate, current_user: User) -> dict:
         _, role = await self._get_employee_role(current_user)
