@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import { BpmnEditor } from '../components/BpmnEditor'
 import { MigrationModal } from '../components/MigrationModal'
+import { StageBuilderModal } from '../components/StageBuilderModal'
 import BpmnPropertiesPanel from '../components/BpmnPropertiesPanel'
 import {
   deleteTemplateVersion,
@@ -219,6 +220,7 @@ export function TemplatesPage() {
     targetVersionId: string
     activeInstances: ActiveProcessInstance[]
   } | null>(null)
+  const [showStageBuilder, setShowStageBuilder] = useState(false)
 
   useEffect(() => {
     if (!templateNameTouched) {
@@ -688,6 +690,14 @@ export function TemplatesPage() {
           >
             + Создать новый
           </button>
+          <button
+            type="button"
+            onClick={() => setShowStageBuilder(true)}
+            disabled={uploadMutation.isPending}
+            className="rounded-2xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm font-semibold text-blue-800 transition hover:border-blue-300 hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            ⚡ Из блоков
+          </button>
         </div>
       </div>
 
@@ -1093,6 +1103,18 @@ export function TemplatesPage() {
         onCompleted={async () => {
           await refreshTemplateQueries()
           setMigrationModalData(null)
+        }}
+      />
+
+      <StageBuilderModal
+        open={showStageBuilder}
+        onClose={() => setShowStageBuilder(false)}
+        onCreated={async (template) => {
+          setShowStageBuilder(false)
+          await refreshTemplateQueries()
+          // Auto-select the newly created template
+          const preferredVersion = getPreferredVersion(sortVersions(template.versions))
+          applyVersion(template, preferredVersion)
         }}
       />
       </div>
