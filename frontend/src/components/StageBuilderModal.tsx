@@ -144,11 +144,28 @@ function UserChips({
 
 interface Props {
   open: boolean
+  /** Pre-fill form from an existing stage schema (edit mode). Null = create mode. */
+  initialTemplate?: ProcessTemplate | null
   onClose: () => void
   onCreated: (template: TemplateRead) => void
 }
 
-export function StageBuilderModal({ open, onClose, onCreated }: Props) {
+function templateToLocalStages(tpl: ProcessTemplate): LocalStage[] {
+  return tpl.stages.map(s => ({
+    _key: s.id || nextKey(),
+    name: s.name,
+    deadline_hours: s.deadline_hours,
+    mode: s.mode,
+    users: s.users.map(u => ({ id: u.id, label: u.label })),
+    subblocks: s.subblocks.map(sb => ({
+      _key: sb.id || nextKey(),
+      name: sb.name,
+      users: sb.users.map(u => ({ id: u.id, label: u.label })),
+    })),
+  }))
+}
+
+export function StageBuilderModal({ open, initialTemplate, onClose, onCreated }: Props) {
   const authUser = useAuthStore(s => s.user)
   const companyId = authUser?.company_id ?? ''
 
@@ -159,6 +176,8 @@ export function StageBuilderModal({ open, onClose, onCreated }: Props) {
   })
   const roles = rolesQuery.data ?? []
 
+  const isEditMode = Boolean(initialTemplate)
+
   // Form state
   const [processId, setProcessId]       = useState('')
   const [processName, setProcessName]   = useState('')
@@ -168,22 +187,32 @@ export function StageBuilderModal({ open, onClose, onCreated }: Props) {
   const [errors, setErrors]             = useState<ValidationError[]>([])
   const [submitting, setSubmitting]     = useState(false)
 
-  // Auto-sync templateName with processName
+  // Auto-sync templateName with processName only in create mode
   useEffect(() => {
-    if (!templateNameTouched) setTemplateName(processName)
-  }, [processName, templateNameTouched])
+    if (!templateNameTouched && !isEditMode) setTemplateName(processName)
+  }, [processName, templateNameTouched, isEditMode])
 
-  // Reset on open
+  // Reset / pre-fill on open
   useEffect(() => {
     if (!open) return
-    setProcessId('')
-    setProcessName('')
-    setTemplateName('')
-    setTemplateNameTouched(false)
-    setStages([emptyStage()])
+    if (initialTemplate) {
+      // Edit mode: pre-fill from schema
+      setProcessId(initialTemplate.processId)
+      setProcessName(initialTemplate.processName)
+      setTemplateName(initialTemplate.templateName || initialTemplate.processName)
+      setTemplateNameTouched(true)
+      setStages(templateToLocalStages(initialTemplate))
+    } else {
+      // Create mode: blank form
+      setProcessId('')
+      setProcessName('')
+      setTemplateName('')
+      setTemplateNameTouched(false)
+      setStages([emptyStage()])
+    }
     setErrors([])
     setSubmitting(false)
-  }, [open])
+  }, [open, initialTemplate])
 
   if (!open) return null
 
@@ -330,7 +359,9 @@ export function StageBuilderModal({ open, onClose, onCreated }: Props) {
         <div className="flex items-start justify-between gap-4 border-b border-slate-100 px-6 py-5">
           <div>
             <div className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">Конструктор</div>
-            <h2 className="mt-1 text-2xl font-semibold text-slate-950">Создать шаблон из блоков</h2>
+            <h2 className="mt-1 text-2xl font-semibold text-slate-950">
+              {isEditMode ? 'Редактировать блоки шаблона' : 'Создать шаблон из блоков'}
+            </h2>
           </div>
           <button
             type="button"
@@ -350,15 +381,21 @@ export function StageBuilderModal({ open, onClose, onCreated }: Props) {
               <label className="mb-1.5 block text-sm font-semibold text-slate-800">Process ID *</label>
               <input
                 value={processId}
-                onChange={e => setProcessId(e.target.value)}
+                onChange={e => { if (!isEditMode) setProcessId(e.target.value) }}
+                readOnly={isEditMode}
                 placeholder="contractApproval"
                 className={[
                   'w-full rounded-2xl border px-4 py-3 text-sm outline-none transition focus:ring-4',
-                  processIdError
-                    ? 'border-red-300 bg-red-50 focus:border-red-500 focus:ring-red-100'
-                    : 'border-slate-200 bg-white focus:border-blue-500 focus:ring-blue-100',
+                  isEditMode
+                    ? 'border-slate-200 bg-slate-100 text-slate-500 cursor-not-allowed'
+                    : processIdError
+                      ? 'border-red-300 bg-red-50 focus:border-red-500 focus:ring-red-100'
+                      : 'border-slate-200 bg-white focus:border-blue-500 focus:ring-blue-100',
                 ].join(' ')}
               />
+              {isEditMode ? (
+                <div className="mt-1 text-[11px] text-slate-400">Process ID нельзя изменить при редактировании</div>
+              ) : null}
               <div className="mt-1 text-[11px] text-slate-400">Только латиница, цифры, _ и -. Первый символ — буква.</div>
               {processIdError ? <div className="mt-1 text-xs font-medium text-red-600">{processIdError}</div> : null}
             </div>
@@ -367,9 +404,15 @@ export function StageBuilderModal({ open, onClose, onCreated }: Props) {
               <label className="mb-1.5 block text-sm font-semibold text-slate-800">Название процесса *</label>
               <input
                 value={processName}
-                onChange={e => setProcessName(e.target.value)}
+                onChange={e => { if (!isEditMode) setProcessName(e.target.value) }}
+                readOnly={isEditMode}
                 placeholder="Согласование договора"
-                className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                className={[
+                  'w-full rounded-2xl border px-4 py-3 text-sm outline-none transition focus:ring-4',
+                  isEditMode
+                    ? 'border-slate-200 bg-slate-100 text-slate-500 cursor-not-allowed'
+                    : 'border-slate-200 bg-white focus:border-blue-500 focus:ring-blue-100',
+                ].join(' ')}
               />
             </div>
 
@@ -626,7 +669,9 @@ export function StageBuilderModal({ open, onClose, onCreated }: Props) {
         {/* Footer */}
         <div className="flex items-center justify-between gap-3 border-t border-slate-100 px-6 py-4">
           <div className="text-xs text-slate-400">
-            Генерирует BPMN XML и сохраняет как Draft
+            {isEditMode
+              ? 'Сохранит новый Draft с обновлённой схемой блоков'
+              : 'Генерирует BPMN XML и сохраняет как Draft'}
           </div>
           <div className="flex gap-3">
             <button
@@ -642,7 +687,7 @@ export function StageBuilderModal({ open, onClose, onCreated }: Props) {
               disabled={submitting}
               className="rounded-2xl bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {submitting ? 'Создание...' : 'Создать шаблон'}
+              {submitting ? (isEditMode ? 'Сохранение...' : 'Создание...') : (isEditMode ? 'Сохранить как Draft' : 'Создать шаблон')}
             </button>
           </div>
         </div>

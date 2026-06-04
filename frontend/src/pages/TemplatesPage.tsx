@@ -19,6 +19,8 @@ import { showToast } from '../lib/toast'
 import { useAuthStore } from '../store/authStore'
 import { getRoles } from '../api/roles'
 import { getSchema, getSchemas } from '../api/schemas'
+import { extractStageSchema } from '../lib/bpmnStageGenerator'
+import type { ProcessTemplate } from '../lib/bpmnStageGenerator'
 import type { ActiveProcessInstance, TemplateRead, TemplateVersionRead } from '../types/api'
 
 const VERSION_STATUS_STYLES: Record<TemplateVersionRead['status'], string> = {
@@ -221,6 +223,7 @@ export function TemplatesPage() {
     activeInstances: ActiveProcessInstance[]
   } | null>(null)
   const [showStageBuilder, setShowStageBuilder] = useState(false)
+  const [stageBuilderInitial, setStageBuilderInitial] = useState<ProcessTemplate | null>(null)
 
   useEffect(() => {
     if (!templateNameTouched) {
@@ -635,6 +638,13 @@ export function TemplatesPage() {
   }
 
   const editorReadonly = selectedVersion?.status === 'DEPLOYED' || selectedVersion?.status === 'ARCHIVED'
+
+  // Detect embedded stage schema in the currently viewed XML
+  const currentVersionSchema = useMemo(
+    () => (currentXml ? extractStageSchema(currentXml) : null),
+    [currentXml],
+  )
+
   const createTemplateDisabled =
     uploadMutation.isPending || !processId.trim() || !processName.trim() || !PROCESS_ID_PATTERN.test(processId.trim())
 
@@ -692,7 +702,7 @@ export function TemplatesPage() {
           </button>
           <button
             type="button"
-            onClick={() => setShowStageBuilder(true)}
+            onClick={() => { setStageBuilderInitial(null); setShowStageBuilder(true) }}
             disabled={uploadMutation.isPending}
             className="rounded-2xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm font-semibold text-blue-800 transition hover:border-blue-300 hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-60"
           >
@@ -1005,6 +1015,20 @@ export function TemplatesPage() {
                       {saveMutation.isPending ? 'Сохранение...' : 'Сохранить'}
                     </button>
 
+                    {!editorReadonly && currentVersionSchema ? (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setStageBuilderInitial(currentVersionSchema)
+                          setShowStageBuilder(true)
+                        }}
+                        className="rounded-2xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm font-semibold text-violet-800 transition hover:border-violet-300 hover:bg-violet-100"
+                        title="Открыть конструктор блоков для этого шаблона"
+                      >
+                        ⚡ Редактировать блоки
+                      </button>
+                    ) : null}
+
                     {canDeployCurrentTemplate ? (
                       <>
                         <button
@@ -1108,11 +1132,15 @@ export function TemplatesPage() {
 
       <StageBuilderModal
         open={showStageBuilder}
-        onClose={() => setShowStageBuilder(false)}
+        initialTemplate={stageBuilderInitial}
+        onClose={() => {
+          setShowStageBuilder(false)
+          setStageBuilderInitial(null)
+        }}
         onCreated={async (template) => {
           setShowStageBuilder(false)
+          setStageBuilderInitial(null)
           await refreshTemplateQueries()
-          // Auto-select the newly created template
           const preferredVersion = getPreferredVersion(sortVersions(template.versions))
           applyVersion(template, preferredVersion)
         }}

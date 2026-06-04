@@ -314,6 +314,34 @@ ${processBody}
 </definitions>`
 }
 
+// ─── Schema embedding/extraction ─────────────────────────────────────────────
+//
+// The block schema is stored as a base64-encoded JSON comment in the BPMN XML
+// so the template can be re-opened in the stage builder for editing.
+// Base64 is used because XML comments cannot contain "--".
+
+const SCHEMA_MARKER = 'STAGE_SCHEMA:'
+const SCHEMA_COMMENT_RE = /<!--STAGE_SCHEMA:([A-Za-z0-9+/=]+)-->/
+
+function schemaToB64(tpl: ProcessTemplate): string {
+  return btoa(encodeURIComponent(JSON.stringify(tpl)))
+}
+
+function b64ToSchema(b64: string): ProcessTemplate {
+  return JSON.parse(decodeURIComponent(atob(b64))) as ProcessTemplate
+}
+
+/** Extract the embedded stage schema from a BPMN XML string, or return null. */
+export function extractStageSchema(xml: string): ProcessTemplate | null {
+  const match = SCHEMA_COMMENT_RE.exec(xml)
+  if (!match) return null
+  try {
+    return b64ToSchema(match[1])
+  } catch {
+    return null
+  }
+}
+
 // ─── Public entry point ───────────────────────────────────────────────────────
 
 export function generateBpmnXml(tpl: ProcessTemplate): string {
@@ -359,5 +387,12 @@ export function generateBpmnXml(tpl: ProcessTemplate): string {
     allFlows.push({ id: uid('f'), src: pid, tgt: endEl.id })
   }
 
-  return buildXml(allEls, allFlows, tpl)
+  const xml = buildXml(allEls, allFlows, tpl)
+
+  // Embed the schema as a comment right after the XML declaration
+  const schemaComment = `<!--${SCHEMA_MARKER}${schemaToB64(tpl)}-->`
+  return xml.replace(/^(<\?xml[^?]*\?>)/, `$1\n${schemaComment}`)
 }
+
+// Keep marker accessible for tests
+export { SCHEMA_MARKER }
